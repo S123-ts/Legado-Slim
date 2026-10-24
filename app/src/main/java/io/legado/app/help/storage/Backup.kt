@@ -46,7 +46,6 @@ import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
-import io.legado.app.model.VideoPlay.VIDEO_PREF_NAME
 
 internal fun selectedBackupFileNames(isEnabled: (String) -> Boolean): List<String> =
     buildList {
@@ -90,7 +89,6 @@ internal fun selectedBackupFileNames(isEnabled: (String) -> Boolean): List<Strin
                     ReadBookConfig.shareConfigFileName,
                     ThemeConfig.configFileName,
                     "config.xml",
-                    "videoConfig.xml",
                 )
             )
         }
@@ -375,22 +373,6 @@ object Backup {
                                 putStringSet(key, value as Set<String>)
                             }
                         }
-                    }
-                }
-            }
-        }
-        currentCoroutineContext().ensureActive()
-        writePreferenceSnapshot(appCtx, backupPath, "videoConfig") {
-            appCtx.getSharedPreferences(VIDEO_PREF_NAME, Context.MODE_PRIVATE).all.forEach { (key, value) ->
-                when (value) {
-                    is Int -> putInt(key, value)
-                    is Boolean -> putBoolean(key, value)
-                    is Long -> putLong(key, value)
-                    is Float -> putFloat(key, value)
-                    is String -> putString(key, value)
-                    is Set<*> -> {
-                        @Suppress("UNCHECKED_CAST")
-                        putStringSet(key, value as Set<String>)
                     }
                 }
             }

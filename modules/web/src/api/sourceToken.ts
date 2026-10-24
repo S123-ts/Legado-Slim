@@ -51,7 +51,7 @@ export const requestSourceApiToken = async (
 
   const { value } = await ElMessageBox.prompt(
     '请输入阅读应用中配置的访问令牌',
-    'Web 与 MCP 访问令牌',
+    'Web 访问令牌',
     {
       confirmButtonText: '确定',
       cancelButtonText: '取消',

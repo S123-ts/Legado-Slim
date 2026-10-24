@@ -175,11 +175,6 @@
         <activity
             android:name="io.legado.app.ui.book.audio.AudioPlayActivity"
             android:launchMode="singleTask" />
-        <!-- 视频播放器界面 -->
-        <activity
-            android:name="io.legado.app.ui.video.VideoPlayerActivity"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
-            android:launchMode="singleTask" />
         <!-- 授权界面 -->
         <activity
             android:name="io.legado.app.lib.permission.PermissionActivity"
@@ -555,13 +550,6 @@
             android:name=".service.WebService"
             android:foregroundServiceType="dataSync" />
         <service
-            android:name=".service.McpService"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="local_network_book_source_development_service" />
-        </service>
-        <service
             android:name=".service.WebTileService"
             android:exported="true"
             android:foregroundServiceType="dataSync"
@@ -585,9 +573,6 @@
         <service
             android:name=".service.AudioCacheService"
             android:foregroundServiceType="dataSync" />
-        <service
-            android:name=".service.VideoPlayService"
-            android:foregroundServiceType="mediaPlayback" />
         <service
             android:name=".service.DownloadService"
             android:foregroundServiceType="dataSync" />

@@ -20,7 +20,6 @@ class TocExpansionPersistenceLifecycleTest {
         assertTrue(source.contains("ReadBook.book"))
         assertTrue(source.contains("ReadManga.book"))
         assertTrue(source.contains("AudioPlay.book"))
-        assertTrue(source.contains("VideoPlay.book"))
     }
 
     private fun projectFile(pathInApp: String): File {

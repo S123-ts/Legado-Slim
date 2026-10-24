@@ -135,10 +135,6 @@ cn.hutool.core.util.**{*;}
 -dontwarn java.lang.management.ManagementFactory
 -dontwarn java.lang.management.RuntimeMXBean
 
-# PDFBox reads outline metadata only; Android PdfRenderer renders images.
-# Its optional JPEG 2000 decoder is guarded by Class.forName in JPXFilter.
--dontwarn com.gemalto.jp2.JP2Decoder
-
 ## ExoPlayer 如果还不能播放就取消注释这个
 # -keep class com.google.android.exoplayer2.** {*;}
 
@@ -149,32 +145,6 @@ cn.hutool.core.util.**{*;}
 -keepnames class * extends java.lang.Throwable
 -keepclassmembernames,allowobfuscation class * extends java.lang.Throwable{*;}
 
-# GSYVideoPlayer
--keepclassmembers,allowoptimization,allowobfuscation class * extends com.shuyu.gsyvideoplayer.video.base.GSYBaseVideoPlayer {
-    public <init>(android.content.Context);
-    public <init>(android.content.Context, java.lang.Boolean);
-}
--keepclassmembers,allowoptimization,allowobfuscation class * implements com.shuyu.gsyvideoplayer.player.IPlayerManager {
-    public <init>();
-}
--keepclassmembers,allowoptimization,allowobfuscation class * implements com.shuyu.gsyvideoplayer.cache.ICacheManager {
-    public <init>();
-}
--dontwarn com.shuyu.gsyvideoplayer.**
-#-keep class com.shuyu.gsyvideoplayer.video.** { *; }
-#-dontwarn com.shuyu.gsyvideoplayer.video.**
-#-keep class com.shuyu.gsyvideoplayer.video.base.** { *; }
-#-dontwarn com.shuyu.gsyvideoplayer.video.base.**
-#-keep class com.shuyu.gsyvideoplayer.utils.** { *; }
-#-dontwarn com.shuyu.gsyvideoplayer.utils.**
-#-keep class com.shuyu.gsyvideoplayer.player.** {*;}
-#-dontwarn com.shuyu.gsyvideoplayer.player.**
-#-keep class tv.danmaku.ijk.** { *; }
-#-dontwarn tv.danmaku.ijk.**
-#-keep class androidx.media3.** {*;}
-#-keep interface androidx.media3.**
-#-keep class com.shuyu.alipay.** {*;}
-#-keep interface com.shuyu.alipay.**
 -keep public class * extends android.view.View{
     *** get*();
     void set*(***);

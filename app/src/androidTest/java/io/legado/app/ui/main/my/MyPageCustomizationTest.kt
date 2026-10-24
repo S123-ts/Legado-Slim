@@ -19,7 +19,6 @@ import io.legado.app.constant.PreferKey
 import io.legado.app.help.config.LocalConfig
 import io.legado.app.help.storage.Restore
 import io.legado.app.help.storage.writePreferenceSnapshot
-import io.legado.app.service.McpService
 import io.legado.app.service.WebService
 import io.legado.app.ui.config.ConfigActivity
 import io.legado.app.ui.config.ConfigTag
@@ -67,7 +66,6 @@ class MyPageCustomizationTest {
 
     @Test fun actualPickerMovesOnlySelectedItemsAndMoreKeepsExistingActions() {
         val webRunning = WebService.isRun
-        val mcpRunning = McpService.isRun
         val scheduled = prefs.getBoolean(PreferKey.autoTaskService, false)
         openPicker()
         choose("autoTaskManage")
@@ -77,18 +75,17 @@ class MyPageCustomizationTest {
 
         openPicker()
         for (key in listOf("autoTaskManage", PreferKey.autoTaskService, PreferKey.webService,
-            PreferKey.mcpService, "txtTocRuleManage", "replaceManage", "dictRuleManage", "check_update")) choose(key)
+            "txtTocRuleManage", "replaceManage", "dictRuleManage", "check_update")) choose(key)
         screenshot("my-customization-picker")
         scenario!!.recreate()
         // The real native dialog must retain its unsaved checked items across recreation.
         onView(withText(android.R.string.ok)).inRoot(isDialog()).perform(click())
         val selected = setOf("autoTaskManage", PreferKey.autoTaskService, PreferKey.webService,
-            PreferKey.mcpService, "txtTocRuleManage", "replaceManage", "dictRuleManage", "check_beta_update")
+            "txtTocRuleManage", "replaceManage", "dictRuleManage", "check_beta_update")
         assertEquals(selected, prefs.getStringSet(PreferKey.myMoreItems, emptySet()))
         awaitMain { !it.findPreference<Preference>("autoTaskManage")!!.isVisible &&
             it.findPreference<Preference>("check_update")!!.isVisible }
         assertEquals(webRunning, WebService.isRun)
-        assertEquals(mcpRunning, McpService.isRun)
         assertEquals(scheduled, prefs.getBoolean(PreferKey.autoTaskService, false))
         screenshot("my-customization-main")
         val monitor = instrumentation.addMonitor(ConfigActivity::class.java.name, null, false)
@@ -121,7 +118,7 @@ class MyPageCustomizationTest {
 
     @Test fun realConfigRestoreAndLegacyBackupRestoreTheVisiblePage() {
         val directory = File(context.cacheDir, "my-page-backup-${UUID.randomUUID()}").apply { mkdirs() }
-        val selected = setOf("autoTaskManage", PreferKey.mcpService)
+        val selected = setOf("autoTaskManage", PreferKey.webService)
         try {
             writePreferenceSnapshot(context, directory.absolutePath, "config") {
                 putStringSet(PreferKey.myMoreItems, selected)

@@ -96,11 +96,6 @@
     <string name="retry">重试</string>
     <string name="web_service">Web 服务</string>
     <string name="web_service_desc">用浏览器写源或看书</string>
-    <string name="mcp_service">MCP 服务</string>
-    <string name="mcp_service_desc">书源开发工具</string>
-    <string name="mcp_service_token_required">请先配置 Web 与 MCP 访问令牌</string>
-    <string name="mcp_service_token_invalid">MCP 访问令牌未配置或不正确</string>
-    <string name="mcp_service_start_failed">MCP 服务启动失败</string>
     <string name="web_edit_source">Web 编辑书源</string>
     <string name="offline_cache">离线缓存</string>
     <string name="offline_cache_t">离线缓存</string>
@@ -299,8 +294,6 @@
     <string name="download_live_failed">下载失败</string>
     <string name="web_service_live_started">Web已开启</string>
     <string name="web_service_live_stopped">Web已关闭</string>
-    <string name="mcp_service_live_started">MCP已开启</string>
-    <string name="mcp_service_live_stopped">MCP已关闭</string>
     <string name="no_download">暂无任务</string>
     <string name="download_count">已下载 %1$d/%2$d</string>
     <string name="import_select_book">导入选择书籍</string>
@@ -722,11 +715,9 @@
     <string name="web_menu">Web 服务</string>
     <string name="web_port_title">Web 端口</string>
     <string name="web_port_summary">当前端口 %s</string>
-    <string name="mcp_port_title">MCP 端口</string>
-    <string name="mcp_port_summary">当前端口 %s</string>
     <string name="js_source_api_token_required_title">访问令牌保护</string>
-    <string name="js_source_api_token_required_summary">开启时 Web 书源与 MCP 接口必须提供令牌；仅在可信网络中关闭</string>
-    <string name="js_source_api_token_title">Web 与 MCP 访问令牌</string>
+    <string name="js_source_api_token_required_summary">开启时 Web 书源接口必须提供令牌；仅在可信网络中关闭</string>
+    <string name="js_source_api_token_title">Web 访问令牌</string>
     <string name="js_source_api_token_summary">开启访问令牌保护时使用</string>
     <string name="js_source_api_token_configured">已配置</string>
     <string name="qr_share">二维码分享</string>

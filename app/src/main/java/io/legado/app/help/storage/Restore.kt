@@ -49,7 +49,6 @@ import io.legado.app.help.config.ReplacePreviewConfig
 import io.legado.app.help.config.ThemeConfig
 import io.legado.app.help.http.CookieStore
 import io.legado.app.lib.theme.WallpaperTheme
-import io.legado.app.model.VideoPlay.VIDEO_PREF_NAME
 import io.legado.app.model.BookCover
 import io.legado.app.model.localBook.LocalBook
 import io.legado.app.service.AutoTaskScheduler
@@ -227,7 +226,6 @@ object Restore {
         val aes = BackupAES(password)
         val backupRoot = File(path)
         val restoredPreferences = readPreferenceSnapshot(appCtx, path, "config")
-        val restoredVideoPreferences = readPreferenceSnapshot(appCtx, path, "videoConfig")
         val restoredCookies = if (!lanTransfer && !BackupConfig.ignoreCookies) {
             File(path, BackupConfig.cookieFileName).takeIf { it.exists() }?.let { file ->
                 if (password.isNullOrBlank()) {
@@ -575,24 +573,6 @@ object Restore {
                 edit.putBoolean(PreferKey.mangaRightToLeft, false)
             }
             edit.apply()
-        }
-        restoredVideoPreferences?.let { map ->
-            appCtx.getSharedPreferences(VIDEO_PREF_NAME, Context.MODE_PRIVATE).edit().apply {
-                map.forEach { (key, value) ->
-                    when (value) {
-                        is Int -> putInt(key, value)
-                        is Boolean -> putBoolean(key, value)
-                        is Long -> putLong(key, value)
-                        is Float -> putFloat(key, value)
-                        is String -> putString(key, value)
-                        is Set<*> -> {
-                            @Suppress("UNCHECKED_CAST")
-                            putStringSet(key, value as Set<String>)
-                        }
-                    }
-                }
-                apply()
-            }
         }
         ReadBookConfig.apply {
             comicStyleSelect = appCtx.getPrefInt(PreferKey.comicStyleSelect)

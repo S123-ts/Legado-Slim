@@ -160,7 +160,6 @@ class LanBackupTransferTest {
         assertTrue(backup.contains("ZipUtils.zipFiles(paths, workingZipFile.absolutePath)"))
         assertTrue(backup.contains("File(appCtx.cacheDir, \"lan_backup\").deleteRecursively()"))
         assertTrue(backup.contains("writePreferenceSnapshot(appCtx, backupPath, \"config\")"))
-        assertTrue(backup.contains("writePreferenceSnapshot(appCtx, backupPath, \"videoConfig\")"))
 
         val transfer = projectFile(
             "src/main/java/io/legado/app/help/storage/LanBackupTransfer.kt"
@@ -183,7 +182,6 @@ class LanBackupTransferTest {
         assertTrue(restore.contains("currentCoroutineContext().ensureActive()"))
         assertTrue(restore.contains("withContext(NonCancellable)"))
         assertTrue(restore.contains("readPreferenceSnapshot(appCtx, path, \"config\")"))
-        assertTrue(restore.contains("readPreferenceSnapshot(appCtx, path, \"videoConfig\")"))
         assertTrue(restore.contains("!lanTransfer && !BackupConfig.ignoreCookies"))
         assertTrue(restore.contains("key !in lanTransferIgnoredPrefKeys"))
         assertTrue(flow.contains("lanTransfer = true"))

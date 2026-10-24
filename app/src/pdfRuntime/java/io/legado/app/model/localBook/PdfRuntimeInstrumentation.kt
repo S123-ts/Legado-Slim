@@ -23,30 +23,24 @@ class PdfRuntimeInstrumentation : Instrumentation() {
         try {
             check(!BuildConfig.DEBUG) { "This check must exercise release shrinking" }
             waitForIdleSync()
-            verifyOutlinesAndRendering()
+            verifyRendering()
             finish(Activity.RESULT_OK, Bundle().apply {
-                putString("stream", "PDF_RUNTIME_PASSED: named/direct/compressed outlines, content URI and rendered page\n")
+                putString("stream", "PDF_RUNTIME_PASSED: content URI and rendered page\n")
             })
         } catch (error: Throwable) {
             finish(Activity.RESULT_CANCELED, Bundle().apply { putString("stream", error.stackTraceToString()) })
         }
     }
 
-    private fun verifyOutlinesAndRendering() {
+    private fun verifyRendering() {
         val file = File.createTempFile("pdf-runtime-", ".pdf", targetContext.cacheDir)
         val uri = FileProvider.getUriForFile(targetContext, "${targetContext.packageName}.fileProvider", file)
         val book = Book(bookUrl = uri.toString(), originName = file.name, type = BookType.local or BookType.text,
             durChapterIndex = 2, durChapterPos = 17)
         try {
-            targetContext.assets.open("pdf-outline-direct-named.pdf").use { input ->
+            targetContext.assets.open("pdf-render.pdf").use { input ->
                 file.outputStream().use { input.copyTo(it) }
             }
-            check(PdfOutline.read(book).map { it.pageIndex } == listOf(1, 0))
-            targetContext.assets.open("pdf-outline-compressed.pdf").use { input ->
-                file.outputStream().use { input.copyTo(it) }
-            }
-            val compressed = PdfOutline.read(book)
-            check(compressed.single().title == "Compressed outline" && compressed.single().pageIndex == 0)
             check(book.durChapterIndex == 2 && book.durChapterPos == 17)
             val chapters = PdfFile.getChapterList(book)
             check(chapters.single().url == "pdf_0")

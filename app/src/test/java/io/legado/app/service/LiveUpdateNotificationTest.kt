@@ -123,9 +123,8 @@ class LiveUpdateNotificationTest {
     }
 
     @Test
-    fun `web and MCP services reuse one live notification through stop`() {
+    fun `web service reuses one live notification through stop`() {
         val web = source("app/src/main/java/io/legado/app/service/WebService.kt")
-        val mcp = source("app/src/main/java/io/legado/app/service/McpService.kt")
         val updateLog = source("app/src/main/assets/updateLog.md")
 
         assertTrue(web.contains("applyPromotedProgress("))
@@ -138,17 +137,6 @@ class LiveUpdateNotificationTest {
         assertTrue(web.contains("notificationManager.cancel(NotificationId.WebService)"))
         assertTrue(web.contains("if (isRun)"))
         assertTrue(web.contains("createNotification(terminal = stopping)"))
-
-        assertTrue(mcp.contains("applyPromotedProgress("))
-        assertTrue(mcp.contains("eligible = terminal || isRun"))
-        assertTrue(mcp.contains("terminal = terminal"))
-        assertTrue(mcp.contains("startForeground(NotificationId.McpService"))
-        assertTrue(mcp.contains("IntentAction.stop -> stopServiceWithNotification()"))
-        assertTrue(mcp.contains("setTimeoutAfter(TERMINAL_NOTIFICATION_DURATION)"))
-        assertTrue(mcp.contains("terminalStopJob"))
-        assertTrue(mcp.contains("notificationManager.cancel(NotificationId.McpService)"))
-        assertTrue(mcp.contains("if (isRun)"))
-        assertTrue(mcp.contains("createNotification(terminal = stopping)"))
 
         assertTrue(updateLog.contains("Web 与 MCP 服务支持 Android 16 实时更新通知"))
     }

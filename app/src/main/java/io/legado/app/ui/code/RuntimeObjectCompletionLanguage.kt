@@ -106,8 +106,8 @@ internal class RuntimeObjectCompletionLanguage(
             getThemeConfig() getThemeConfigMap() getThemeMode() getTxtInFolder
             getVerificationCode getWebViewUA() getZipByteArrayContent getZipStringContent head
             hexDecodeToByteArray hexDecodeToString hexEncodeToString HMacBase64 HMacHex
-            htmlFormat importScript lock log logType longToast md5Encode md5Encode16 openUrl
-            openVideoPlayer post queryBase64TTF queryTTF randomUUID() readFile readTxtFile
+            htmlFormat importScript lock log logType longToast md5Encode md5Encode16 openUrl post
+            queryBase64TTF queryTTF randomUUID() readFile readTxtFile
             replaceFont s2t showBrowser singleFlight startBrowser startBrowserAwait strToBytes
             t2s tick timeFormat timeFormatUTC toast toNumChapter toURL un7zFile
             unArchiveFile unrarFile unzipFile webView webViewGetOverrideUrl webViewGetSource
@@ -192,7 +192,7 @@ internal class RuntimeObjectCompletionLanguage(
                 methods = words(
                     """
                     equals getAbsoluteURL() getBigVariable getDisplayTitle getFileName getFontName()
-                    getVariable hashCode() isPay() isVip() isVolume() primaryStr() putBigVariable putDanmaku
+                    getVariable hashCode() isPay() isVip() isVolume() primaryStr() putBigVariable
                     putImgUrl putLyric putVariable update()
                     """
                 ),

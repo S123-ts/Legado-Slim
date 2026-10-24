@@ -78,7 +78,6 @@ class BackupMediaTest {
                 "shareReadConfig.json",
                 "themeConfig.json",
                 "config.xml",
-                "videoConfig.xml",
             ),
             allFiles,
         )

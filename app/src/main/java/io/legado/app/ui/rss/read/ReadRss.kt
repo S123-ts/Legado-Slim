@@ -4,18 +4,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import io.legado.app.constant.AppLog
-import io.legado.app.constant.SourceType
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.RssArticle
 import io.legado.app.data.entities.RssReadRecord
 import io.legado.app.data.entities.RssSource
 import io.legado.app.exception.ContentEmptyException
 import io.legado.app.model.rss.Rss
-import io.legado.app.ui.video.VideoPlayerActivity
 import io.legado.app.ui.widget.dialog.PhotoDialog
 import io.legado.app.utils.NetworkUtils
 import io.legado.app.utils.showDialogFragment
-import io.legado.app.utils.startActivity
 import kotlinx.coroutines.Dispatchers.IO
 
 object ReadRss {
@@ -34,14 +31,6 @@ object ReadRss {
             )
             return
         }
-        if (type == 2) {
-            activity.startActivity<VideoPlayerActivity> {
-                putExtra("sourceKey", record.origin)
-                putExtra("sourceType", SourceType.rss)
-                putExtra("record", record.record)
-            }
-            return
-        }
         readNoHtml(activity, record, type)
     }
 
@@ -58,15 +47,6 @@ object ReadRss {
                 link = rssArticle.link,
                 sort = rssArticle.sort
             )
-            return
-        }
-        if (type == 2) {
-            //视频播放
-            fragment.startActivity<VideoPlayerActivity> {
-                putExtra("sourceKey", rssArticle.origin)
-                putExtra("sourceType", SourceType.rss)
-                putExtra("record", rssArticle.link)
-            }
             return
         }
         readNoHtml(fragment, rssArticle, rssSource, type)

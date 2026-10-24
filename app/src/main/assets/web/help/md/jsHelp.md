@@ -648,16 +648,6 @@ cache.deleteMemory(key: String)
 // legado:// 或 yuedu:// 导入链接会直接打开应用内导入确认页
 java.openUrl(url: String, mimeType: String = null)
 ```
-## 视频播放器函数
-```js
-* @param url 视频播放链接
-* @param title 视频的标题
-* 省略 isFloat 时使用视频设置中的默认值
-java.openVideoPlayer(url: String, title: String)
-* @param isFloat 是否悬浮窗打开
-java.openVideoPlayer(url: String, title: String, isFloat: Boolean)
-```
-
 <!-- js-source-guide:start -->
 ## JavaScript 单文件书源
 

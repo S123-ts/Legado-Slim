@@ -21,7 +21,6 @@ import io.legado.app.help.http.CookieManager.cookieJarHeader
 import io.legado.app.help.http.CookieStore
 import io.legado.app.help.http.SSLHelper
 import io.legado.app.help.http.StrResponse
-import io.legado.app.help.source.SourceHelp
 import io.legado.app.help.source.SourceVerificationHelp
 import io.legado.app.help.source.shouldSuppressSourceNavigation
 import io.legado.app.help.source.VerificationResult
@@ -29,7 +28,6 @@ import io.legado.app.help.source.getSourceType
 import io.legado.app.help.book.BookHelp
 import io.legado.app.model.BatchContentContext
 import io.legado.app.model.Debug
-import io.legado.app.model.VideoPlay
 import io.legado.app.model.analyzeRule.AnalyzeUrl
 import io.legado.app.model.analyzeRule.QueryTTF
 import io.legado.app.ui.association.OnLineImportActivity
@@ -372,23 +370,6 @@ interface JsExtensions : JsEncodeUtils {
                 delayTime = delayTime
             ).getStrResponse().body
         }
-    }
-
-    @JavascriptInterface
-    fun openVideoPlayer(url: String, title: String) {
-        openVideoPlayer(url, title, VideoPlay.defaultFloatWindow)
-    }
-
-    /**
-     * 打开内置视频播放器
-     * @param url 视频播放链接
-     * @param title 视频的标题
-     * @param isFloat 是否悬浮窗打开
-     */
-    @JavascriptInterface
-    fun openVideoPlayer(url: String, title: String, isFloat: Boolean) {
-        if (!canOpenSourceUi()) return
-        SourceHelp.openVideoPlayer(getSource(), url, title, isFloat)
     }
 
     /**

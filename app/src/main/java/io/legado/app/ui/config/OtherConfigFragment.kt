@@ -32,10 +32,8 @@ import io.legado.app.lib.theme.primaryColor
 import io.legado.app.model.CheckSource
 import io.legado.app.model.ImageProvider
 import io.legado.app.receiver.SharedReceiverActivity
-import io.legado.app.service.McpService
 import io.legado.app.service.WebService
 import io.legado.app.ui.file.HandleFileContract
-import io.legado.app.ui.video.config.SettingsDialog
 import io.legado.app.ui.widget.code.addJsonPattern
 import io.legado.app.ui.widget.number.NumberPickerDialog
 import io.legado.app.utils.LogUtils
@@ -79,26 +77,13 @@ class OtherConfigFragment : PreferenceFragment(),
         upPreferenceSummary(PreferKey.preDownloadNum, AppConfig.preDownloadNum.toString())
         upPreferenceSummary(PreferKey.threadCount, AppConfig.threadCount.toString())
         upPreferenceSummary(PreferKey.webPort, AppConfig.webPort.toString())
-        upPreferenceSummary(PreferKey.mcpPort, AppConfig.mcpPort.toString())
         findPreference<EditTextPreference>(PreferKey.jsSourceApiToken)?.let {
             it.isPersistent = false
             it.text = AppConfig.jsSourceApiToken
             it.setOnPreferenceChangeListener { _, newValue ->
-                val previousToken = AppConfig.jsSourceApiToken
                 val token = normalizeJsSourceApiToken(newValue?.toString())
                 AppConfig.jsSourceApiToken = token
                 upPreferenceSummary(PreferKey.jsSourceApiToken, token)
-                if (
-                    McpService.isRun &&
-                    AppConfig.jsSourceApiTokenRequired &&
-                    previousToken != token
-                ) {
-                    if (token == null) {
-                        McpService.stop(requireContext())
-                    } else {
-                        McpService.restart(requireContext())
-                    }
-                }
                 true
             }
             it.setOnBindEditTextListener { editText ->
@@ -138,7 +123,6 @@ class OtherConfigFragment : PreferenceFragment(),
         when (preference.key) {
             PreferKey.userAgent -> showUserAgentDialog()
             PreferKey.customHosts -> showCustomHostsDialog()
-            PreferKey.videoSetting -> showDialogFragment(SettingsDialog(requireActivity()))
             PreferKey.defaultBookTreeUri -> localBookTreeSelect.launch {
                 title = getString(R.string.select_book_folder)
                 mode = HandleFileContract.DIR_SYS
@@ -169,15 +153,6 @@ class OtherConfigFragment : PreferenceFragment(),
                 .setValue(AppConfig.webPort)
                 .show {
                     AppConfig.webPort = it
-                }
-
-            PreferKey.mcpPort -> NumberPickerDialog(requireContext())
-                .setTitle(getString(R.string.mcp_port_title))
-                .setMaxValue(65530)
-                .setMinValue(1024)
-                .setValue(AppConfig.mcpPort)
-                .show {
-                    AppConfig.mcpPort = it
                 }
 
             PreferKey.cleanCache -> clearCache()
@@ -239,20 +214,10 @@ class OtherConfigFragment : PreferenceFragment(),
                 }
             }
 
-            PreferKey.mcpPort -> {
-                upPreferenceSummary(key, AppConfig.mcpPort.toString())
-                if (McpService.isRun) {
-                    McpService.restart(requireContext())
-                }
-            }
-
             PreferKey.jsSourceApiTokenRequired -> {
                 if (WebService.isRun) {
                     WebService.stop(requireContext())
                     WebService.start(requireContext())
-                }
-                if (McpService.isRun) {
-                    McpService.restart(requireContext())
                 }
             }
 
@@ -346,7 +311,6 @@ class OtherConfigFragment : PreferenceFragment(),
 
             PreferKey.threadCount -> preference.summary = getString(R.string.threads_num, value)
             PreferKey.webPort -> preference.summary = getString(R.string.web_port_summary, value)
-            PreferKey.mcpPort -> preference.summary = getString(R.string.mcp_port_summary, value)
             PreferKey.jsSourceApiToken -> preference.summary = if (value.isNullOrBlank()) {
                 getString(R.string.js_source_api_token_summary)
             } else {

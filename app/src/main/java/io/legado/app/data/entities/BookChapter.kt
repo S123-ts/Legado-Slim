@@ -78,13 +78,6 @@ data class BookChapter(
         }
     }
 
-    fun putDanmaku(value: String?) { //存入弹幕文本
-        if (super.putVariable("danmaku", value)) {
-            variable = GSON.toJson(variableMap)
-            update()
-        }
-    }
-
     @Ignore
     @IgnoredOnParcel
     @Transient

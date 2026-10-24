@@ -154,12 +154,6 @@ object BookContent {
                             Debug.log(bookSource.bookSourceUrl, "┌获取副文歌词")
                             Debug.log(bookSource.bookSourceUrl, "└\n$subContent")
                         }
-
-                        book.isVideo -> {
-                            bookChapter.putDanmaku(subContent)
-                            Debug.log(bookSource.bookSourceUrl, "┌获取副文弹幕")
-                            Debug.log(bookSource.bookSourceUrl, "└\n$subContent")
-                        }
                     }
                 }.onFailure { e ->
                     Debug.log(bookSource.bookSourceUrl, "获取副文出错, ${e.localizedMessage}")

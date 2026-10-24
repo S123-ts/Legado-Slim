@@ -54,7 +54,6 @@ class JsSourceWebApiContractTest {
         assertTrue(protectionPreference.contains("android:key=\"jsSourceApiTokenRequired\""))
         assertTrue(protectionChange.contains("WebService.stop(requireContext())"))
         assertTrue(protectionChange.contains("WebService.start(requireContext())"))
-        assertTrue(protectionChange.contains("McpService.restart(requireContext())"))
     }
 
     @Test
@@ -350,7 +349,7 @@ class JsSourceWebApiContractTest {
         assertTrue(api.contains("去除脚本文本首尾空白"))
         assertTrue(api.contains("X-Legado-Token"))
         assertTrue(api.contains("其他设置"))
-        assertTrue(api.contains("Web 与 MCP 访问令牌"))
+        assertTrue(api.contains("Web 访问令牌"))
         assertTrue(api.contains("Sec-WebSocket-Protocol"))
         assertTrue(api.contains("读取任何 WebSocket 帧前"))
         assertTrue(api.contains("不会进入应用备份"))
@@ -388,7 +387,7 @@ class JsSourceWebApiContractTest {
         assertFalse(webApi.contains("apiToken_localStorage_key"))
         assertTrue(webApi.contains("token: string | undefined"))
         assertTrue(webApi.contains("sourceApiTokenWebSocketProtocols(token)"))
-        assertTrue(sourceToken.contains("Web 与 MCP 访问令牌"))
+        assertTrue(sourceToken.contains("Web 访问令牌"))
         assertTrue(webShelf.contains("requestSourceApiToken({ remember: false })"))
         assertTrue(sourceEditor.contains("v-if=\"authorized\""))
         assertTrue(sourceEditor.contains("await requestSourceApiToken()"))

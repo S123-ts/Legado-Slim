@@ -85,7 +85,6 @@ class SourceNavigationUiTest {
                     source.openUrl('https://navigation.invalid/login');
                     java.startBrowser('https://navigation.invalid/login', 'Login');
                     java.showBrowser('https://navigation.invalid/login');
-                    java.openVideoPlayer('https://navigation.invalid/video.mp4', 'Video', false);
                     var blocked = false;
                     try { java.startBrowserAwait('https://navigation.invalid/login', 'Login'); }
                     catch (e) { blocked = true; }
