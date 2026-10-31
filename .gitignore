@@ -8,6 +8,9 @@ build/
 .externalNativeBuild
 /release
 /tmp
+/legado-booksource/
+# 抓取与核对的一次性脚本、候选数据（.qoder/rules 需要入库，故只忽略 tmp）
+/.qoder/tmp/
 node_modules/
 /app/app
 /app/google
@@ -18,3 +21,8 @@ package-lock.json
 .kotlin/
 .cxx
 .vscode
+
+# 本地产物与工具目录，不入库
+/.qoder-credits/
+/.workbuddy-ai/
+/tts-sources/

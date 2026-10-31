@@ -24,5 +24,11 @@
   "bugs": {
     "url": "https://github.com/gedoor/legado/issues"
   },
-  "homepage": "https://github.com/gedoor/legado#readme"
+  "homepage": "https://github.com/gedoor/legado#readme",
+  "dependencies": {
+    "@xmldom/xmldom": "^0.9.12",
+    "cheerio": "^1.2.0",
+    "iconv-lite": "^0.7.3",
+    "xpath": "^0.0.36"
+  }
 }
