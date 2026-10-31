@@ -2,7 +2,7 @@ package io.legado.app.help
 
 import io.legado.app.constant.AppConst
 import io.legado.app.data.appDb
-import io.legado.app.data.entities.DictRule
+import io.legado.app.data.entities.BookSource
 import io.legado.app.data.entities.HttpTTS
 import io.legado.app.data.entities.KeyboardAssist
 import io.legado.app.data.entities.RssSource
@@ -34,13 +34,21 @@ object DefaultData {
                 if (LocalConfig.needUpRssSources) {
                     importDefaultRssSources()
                 }
-                if (LocalConfig.needUpDictRule) {
-                    importDefaultDictRules()
+                if (LocalConfig.needUpBookSources) {
+                    importDefaultBookSources()
                 }
             }.onError {
                 it.printOnDebug()
             }
         }
+    }
+
+    val bookSources: List<BookSource> by lazy {
+        val json = String(
+            appCtx.assets.open("defaultData${File.separator}bookSources.json")
+                .readBytes()
+        )
+        GSON.fromJsonArray<BookSource>(json).getOrDefault(emptyList())
     }
 
     val httpTTS: List<HttpTTS> by lazy {
@@ -95,20 +103,20 @@ object DefaultData {
         GSON.fromJsonObject<BookCover.CoverRule>(json).getOrThrow()
     }
 
-    val dictRules: List<DictRule> by lazy {
-        val json = String(
-            appCtx.assets.open("defaultData${File.separator}dictRules.json")
-                .readBytes()
-        )
-        GSON.fromJsonArray<DictRule>(json).getOrThrow()
-    }
-
     val keyboardAssists: List<KeyboardAssist> by lazy {
         val json = String(
             appCtx.assets.open("defaultData${File.separator}keyboardAssists.json")
                 .readBytes()
         )
         GSON.fromJsonArray<KeyboardAssist>(json).getOrThrow()
+    }
+
+    fun importDefaultBookSources() {
+        val existing = appDb.bookSourceDao.all.map { it.bookSourceUrl }.toSet()
+        val toInsert = bookSources.filter { it.bookSourceUrl !in existing }
+        if (toInsert.isNotEmpty()) {
+            appDb.bookSourceDao.insert(*toInsert.toTypedArray())
+        }
     }
 
     fun importDefaultHttpTTS() {
@@ -130,10 +138,6 @@ object DefaultData {
             .forEach { it.clearSharedGlobalState() }
         appDb.rssSourceDao.deleteDefault()
         appDb.rssSourceDao.insert(*rssSources.toTypedArray())
-    }
-
-    fun importDefaultDictRules() {
-        appDb.dictRuleDao.insert(*dictRules.toTypedArray())
     }
 
 }
