@@ -202,6 +202,12 @@ android {
     lint { //忽略string翻译缺失，后面需要翻译时去掉，todo
         disable 'MissingTranslation'
     }
+    testOptions {
+        unitTests {
+            // 纯 JVM 单测会执行到 android.util.Log，未 mock 时直接抛异常；返回默认值让这些用例跑通
+            returnDefaultValues = true
+        }
+    }
 }
 
 androidComponents {
