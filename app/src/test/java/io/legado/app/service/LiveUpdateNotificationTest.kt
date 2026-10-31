@@ -61,7 +61,6 @@ class LiveUpdateNotificationTest {
             "app/src/main/java/io/legado/app/ui/config/OtherConfigFragment.kt"
         )
         val download = source("app/src/main/java/io/legado/app/model/Download.kt")
-        val updateDialog = source("app/src/main/java/io/legado/app/ui/about/UpdateDialog.kt")
 
         assertTrue(manifest.contains("android.permission.POST_PROMOTED_NOTIFICATIONS"))
         assertTrue(service.contains("private var nextNotificationId = NotificationId.Download"))
@@ -119,7 +118,6 @@ class LiveUpdateNotificationTest {
         assertTrue(settings.contains("promotedNotificationSettingsIntent().resolveActivity"))
         assertTrue(settings.contains("intent.resolveActivity(requireContext().packageManager)"))
         assertTrue(settings.contains("putPrefBoolean(PreferKey.liveUpdateNotifications, false)"))
-        assertTrue(updateDialog.contains("isAppUpdate = true"))
     }
 
     @Test

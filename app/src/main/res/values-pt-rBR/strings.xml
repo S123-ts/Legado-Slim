@@ -192,7 +192,6 @@
     <string name="copy_source">Copiar a fonte</string>
     <string name="paste_source">Colar a fonte</string>
     <string name="source_rule_s">A descrição de fonte das regras</string>
-    <string name="check_update">Verificar por atualizações</string>
     <string name="camera_scan">Digitalizar código QR</string>
     <string name="scan_image">Digitalizar imagens locais</string>
     <string name="rule_summary">Descrição das regras</string>
@@ -249,7 +248,6 @@
     <string name="origin_show">Origem: %s</string>
     <string name="import_replace_rule">Import replace rule</string>
     <string name="import_replace_rule_on_line">Importar regras on-line</string>
-    <string name="check_update_interval">Intervalo de atualizações</string>
     <string name="bookshelf_px_0">Por recentes</string>
     <string name="bookshelf_px_1">Por data de atualização</string>
     <string name="bookshelf_px_2">Por título do livro</string>

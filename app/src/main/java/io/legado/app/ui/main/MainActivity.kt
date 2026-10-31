@@ -38,13 +38,10 @@ import io.legado.app.help.config.AppConfig
 import io.legado.app.help.config.LocalConfig
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.help.storage.Backup
-import io.legado.app.help.update.AppUpdate
-import io.legado.app.help.update.isIgnoredAppUpdate
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.lib.theme.primaryColor
 import io.legado.app.service.BaseReadAloudService
 import io.legado.app.ui.about.CrashLogsDialog
-import io.legado.app.ui.about.UpdateDialog
 import io.legado.app.ui.autoTask.ImportAutoTaskDialog
 import io.legado.app.ui.association.ImportBookSourceDialog
 import io.legado.app.ui.association.ImportHttpTtsDialog
@@ -77,7 +74,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import splitties.views.bottomPadding
 import kotlin.coroutines.resume
-import kotlin.time.Duration.Companion.hours
 
 /**
  * 主界面
@@ -293,21 +289,6 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
      */
     private suspend fun upVersion() = suspendCancellableCoroutine sc@{ block ->
         if (LocalConfig.versionCode == appInfo.versionCode) {
-            if (AppConfig.autoUpdateVariant) {
-                if (LocalConfig.lastCheckUpdate + 24.hours.inWholeMilliseconds < System.currentTimeMillis()) {
-                    AppUpdate.gitHubUpdate.check(lifecycleScope)
-                        .onSuccess {
-                            if (isIgnoredAppUpdate(it.tagName, LocalConfig.ignoreUpdateVersion)) {
-                                return@onSuccess
-                            }
-                            if (supportFragmentManager.isStateSaved) return@onSuccess
-                            showDialogFragment(
-                                UpdateDialog(it)
-                            )
-                        }
-                    LocalConfig.lastCheckUpdate = System.currentTimeMillis()
-                }
-            }
             block.resume(null)
             return@sc
         }

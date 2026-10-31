@@ -120,7 +120,6 @@ class ExploreRefreshUiTest {
         preferences.edit().putBoolean(PreferKey.showDiscovery, true)
             .putBoolean(PreferKey.autoRefresh, false)
             .putBoolean(PreferKey.autoCheckNewBackup, false)
-            .putBoolean("autoUpdateVariant", false)
             .putString(PreferKey.defaultHomePage, "explore").commit()
         LocalConfig.edit().putBoolean("privacyPolicyOk", true)
             .putLong("appVersionCode", appInfo.versionCode).putString("password", "").commit()

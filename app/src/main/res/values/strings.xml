@@ -235,13 +235,6 @@
     <string name="copy_source">Copy source</string>
     <string name="paste_source">Paste source</string>
     <string name="source_rule_s">Source rules description</string>
-    <string name="check_update">Check for Updates</string>
-    <string name="check_beta_update">Check for Beta Updates</string>
-    <string name="check_beta_update_failed">Failed to check for beta updates</string>
-    <string name="beta_update_unsupported">This installation cannot be updated to a beta build. Only beta-signed release or releaseA packages are supported.</string>
-    <string name="beta_update_no_compatible_apk">A newer beta exists, but it has no APK compatible with this device</string>
-    <string name="latest_beta_version">Already on the latest beta version</string>
-    <string name="beta_update_now">Update now</string>
     <string name="camera_scan">Scan QR code</string>
     <string name="scan_image">Scan local images</string>
     <string name="rule_summary">Rules description</string>
@@ -315,7 +308,6 @@
     <string name="origin_show">Origin: %s</string>
     <string name="import_replace_rule">Import replace rules</string>
     <string name="import_replace_rule_on_line">Import online rules</string>
-    <string name="check_update_interval">Check interval for updates</string>
     <string name="bookshelf_px_0">By recent list</string>
     <string name="bookshelf_px_1">By update time</string>
     <string name="bookshelf_px_2">By book title</string>
@@ -1175,7 +1167,6 @@
     <string name="download_from_github">Download from GitHub</string>
     <string name="download_from_backup_cdn">Download from cdn.gigu.edu.kg</string>
     <string name="download_from_second_cdn">Download from cdn.mgz.edu.kg</string>
-    <string name="ignore_this_version">Ignore this version</string>
     <string name="copy_url">copy url</string>
     <string name="full_screen">full screen</string>
     <string name="open_fun">open function</string>
@@ -1653,7 +1644,6 @@
     <string name="invalid_file_path">文件路径无效</string>
     <string name="is_system_tts_no_export">无法导出系统tts</string>
     <string name="click_image_way">点击图片方式</string>
-    <string name="auto_update_summary">每天自动检查软件是否更新</string>
     <string name="shibboleth">口令</string>
     <string name="shibboleth_expired">口令已过期</string>
     <string name="shibboleth_invalid">口令格式不正确</string>
@@ -1822,6 +1812,4 @@
     <string name="view_in_code_editor">View in editor</string>
     <string name="code_editor_result_error">Could not read the editor result. The preview has been kept.</string>
     <string name="reimport_book_source">Reimport this book’s source</string>
-    <string name="customize_my">Customize My page</string>
-    <string name="my_more_items">Move selected items to More</string>
 </resources>

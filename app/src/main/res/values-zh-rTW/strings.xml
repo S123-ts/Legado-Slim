@@ -195,7 +195,6 @@
     <string name="copy_source">複製源</string>
     <string name="paste_source">貼上源</string>
     <string name="source_rule_s">源規則說明</string>
-    <string name="check_update">檢查更新</string>
     <string name="camera_scan">掃描二維碼</string>
     <string name="scan_image">掃描本機圖片</string>
     <string name="rule_summary">規則說明</string>
@@ -252,7 +251,6 @@
     <string name="origin_show">來源：%s</string>
     <string name="import_replace_rule">匯入取代規則</string>
     <string name="import_replace_rule_on_line">匯入線上規則</string>
-    <string name="check_update_interval">檢查更新間隔</string>
     <string name="bookshelf_px_0">按閱讀時間</string>
     <string name="bookshelf_px_1">按更新時間</string>
     <string name="bookshelf_px_2">按書名</string>
@@ -1338,6 +1336,4 @@
     <string name="book_memo_discard">放棄未儲存的修改並關閉？</string>
     <string name="book_memo_save_failed">備忘儲存失敗：%1$s</string>
     <string name="reimport_book_source">重新匯入本書書源</string>
-    <string name="customize_my">自訂我的頁面</string>
-    <string name="my_more_items">將選取的功能移至更多</string>
 </resources>
