@@ -55,7 +55,7 @@ class ReadRecordDeviceScopeTest {
     private fun projectFile(pathInApp: String): String {
         return sequenceOf(File(pathInApp), File("app/$pathInApp"))
             .firstOrNull(File::isFile)
-            ?.readText()
+            ?.readText()?.replace("\r\n", "\n")
             .orEmpty()
     }
 }

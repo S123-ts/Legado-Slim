@@ -140,7 +140,7 @@ class RssWebResourceProxyTest {
     fun activityUsesTheCronetSubresourceProxyContract() {
         val source = java.io.File(
             "src/main/java/io/legado/app/ui/rss/read/ReadRssActivity.kt"
-        ).readText()
+        ).readText().replace("\r\n", "\n")
         assertTrue(source.contains("RssWebResourceProxy.shouldProxy"))
         assertTrue(source.contains("RssProxyResponseInputStream(response, body)"))
         assertTrue(source.contains("webResponse.setStatusCodeAndReasonPhrase"))
@@ -150,7 +150,7 @@ class RssWebResourceProxyTest {
     fun activityDoesNotReadWebViewStateFromTheResourceInterceptorThread() {
         val source = java.io.File(
             "src/main/java/io/legado/app/ui/rss/read/ReadRssActivity.kt"
-        ).readText()
+        ).readText().replace("\r\n", "\n")
         val interceptor = source.substringAfter(
             "private suspend fun getProxiedResource",
         ).substringBefore("private suspend fun getModifiedContentWithJs")
