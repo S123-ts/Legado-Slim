@@ -51,7 +51,7 @@
 先拿真实响应，不要凭页面印象写选择器。用单源诊断脚本或手动 `curl`：
 
 ```bash
-SKILL=/path/to/legado-booksource-search-audit
+SKILL=/path/to/legado-booksource-audit-repair
 node "$SKILL/scripts/probe-site.js" --url=https://site.com --kw=测试书名
 # 已有书源：按 URL 或索引诊断
 node "$SKILL/scripts/probe-site.js" --src=sources.json --idx=0 --kw=测试书名
