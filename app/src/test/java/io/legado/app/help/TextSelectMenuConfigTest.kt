@@ -16,7 +16,7 @@ class TextSelectMenuConfigTest {
             config.bar
         )
         assertEquals(
-            listOf("dict", "search", "browser", "share", "processText"),
+            listOf("search", "browser", "share", "processText"),
             config.more
         )
     }
@@ -25,7 +25,7 @@ class TextSelectMenuConfigTest {
     fun jsonRoundTripPreservesOrder() {
         val config = TextSelectMenuConfig(
             listOf("copy", "processText"),
-            listOf("share", "dict")
+            listOf("share", "highlight")
         )
 
         assertEquals(config, TextSelectMenuConfig.fromJson(config.toJson()))
@@ -52,11 +52,11 @@ class TextSelectMenuConfigTest {
     @Test
     fun normalizedAddsNewHighlightToMoreWithoutMovingSavedActions() {
         val config = TextSelectMenuConfig(
-            bar = listOf("copy", "dict"),
+            bar = listOf("copy", "bookmark"),
             more = listOf("share", "search", "browser", "replace", "bookmark", "aloud", "processText")
         ).normalized()
 
-        assertEquals(listOf("copy", "dict"), config.bar)
+        assertEquals(listOf("copy", "bookmark"), config.bar)
         assertEquals("highlight", config.more.last())
     }
 

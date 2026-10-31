@@ -17,7 +17,6 @@ import io.legado.app.data.entities.saveWithCover
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.globalExecutor
 import io.legado.app.model.ReadBook
-import io.legado.app.model.ReadManga
 import io.legado.app.model.AudioPlay
 import io.legado.app.help.book.ReadRecordCoverCache
 import io.legado.app.help.storage.Restore
@@ -423,7 +422,7 @@ class ReadRecordAuthorIdentityTest {
             AppConfig.enableReadRecord = true
             // Invoke each real resume loader, then its real timer/write path. Reflection only
             // avoids starting chapter/network loading and preserves the shared reader state.
-            for (model in listOf(ReadBook, ReadManga)) {
+            for (model in listOf(ReadBook)) {
                 awaitWrites()
                 val type = model.javaClass
                 val bookField = type.getDeclaredField("book").apply { isAccessible = true }
@@ -515,7 +514,7 @@ class ReadRecordAuthorIdentityTest {
         val saved = dao.all
         try {
             AppConfig.enableReadRecord = true
-            for (model in listOf(ReadBook, ReadManga, AudioPlay)) {
+            for (model in listOf(ReadBook, AudioPlay)) {
                 globalExecutor.submit {}.get(10, TimeUnit.SECONDS)
                 val type = model.javaClass
                 val bookField = type.getDeclaredField("book").apply { isAccessible = true }

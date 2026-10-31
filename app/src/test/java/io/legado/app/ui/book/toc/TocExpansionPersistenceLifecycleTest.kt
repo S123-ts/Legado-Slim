@@ -18,7 +18,6 @@ class TocExpansionPersistenceLifecycleTest {
         assertTrue(setBlock.contains("bookDao.updateTocExpanded(book.bookUrl, expanded)"))
         assertTrue(setBlock.contains("updateActiveReaderBooks(book.bookUrl, expanded)"))
         assertTrue(source.contains("ReadBook.book"))
-        assertTrue(source.contains("ReadManga.book"))
         assertTrue(source.contains("AudioPlay.book"))
     }
 

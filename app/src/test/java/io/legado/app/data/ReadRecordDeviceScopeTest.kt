@@ -18,8 +18,6 @@ class ReadRecordDeviceScopeTest {
         listOf(
             "src/main/java/io/legado/app/model/ReadBook.kt" to
                 "getRecord(AppConst.androidId, book.name, book.author)",
-            "src/main/java/io/legado/app/model/ReadManga.kt" to
-                "getRecord(AppConst.androidId, book.name, book.author)",
             "src/main/java/io/legado/app/model/AudioPlay.kt" to
                 "ReadRecord(\n            deviceId = AppConst.androidId,",
         ).forEach { (path, call) ->
@@ -38,30 +36,6 @@ class ReadRecordDeviceScopeTest {
                 "getRecord(restoredRecord.deviceId, restoredRecord.bookName, restoredRecord.author)"
             )
         )
-    }
-
-    @Test
-    fun `manga resume excludes time spent in background`() {
-        val activity = projectFile(
-            "src/main/java/io/legado/app/ui/book/manga/ReadMangaActivity.kt"
-        )
-        assertTrue(methodBody(activity, "onPause").contains("ReadManga.upReadTime()"))
-        assertTrue(
-            methodBody(activity, "onResume")
-                .contains("ReadManga.readStartTime = System.currentTimeMillis()")
-        )
-
-        val manga = projectFile("src/main/java/io/legado/app/model/ReadManga.kt")
-        val upReadTime = methodBody(manga, "upReadTime")
-        assertTrue(upReadTime.contains("val currentBook = book?.copy() ?: return"))
-        assertTrue(upReadTime.contains("val elapsed = (now - readStartTime).coerceAtLeast(0)"))
-        assertTrue(upReadTime.contains("readStartTime = now"))
-        assertTrue(upReadTime.contains("readRecord.copy()"))
-        assertTrue(upReadTime.contains("record.saveWithCover(snapshotBook, elapsed)"))
-        assertTrue(upReadTime.indexOf("val elapsed = (now - readStartTime).coerceAtLeast(0)") <
-            upReadTime.indexOf("executor.execute"))
-        assertTrue(upReadTime.indexOf("readStartTime = now") <
-            upReadTime.indexOf("executor.execute"))
     }
 
     private fun methodBody(source: String, name: String): String {

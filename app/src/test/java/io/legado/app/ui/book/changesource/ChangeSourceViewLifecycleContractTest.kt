@@ -182,8 +182,6 @@ class ChangeSourceViewLifecycleContractTest {
                 .section("fun changeTo(", "fun removeFromBookshelf"),
             appSource("book/info/BookInfoViewModel.kt")
                 .section("fun changeTo(", "fun saveBook"),
-            appSource("book/manga/ReadMangaViewModel.kt")
-                .section("fun changeTo(", "private fun checkLocalBookFileExist"),
         )
         viewModels.forEach { changeTo ->
             assertTrue(changeTo.contains("onSuccess: () -> Unit"))
@@ -197,13 +195,10 @@ class ChangeSourceViewLifecycleContractTest {
             .section("override fun changeTo(", "override fun finish")
         val infoActivity = appSource("book/info/BookInfoActivity.kt")
             .section("override fun changeTo(", "override fun coverChangeTo")
-        val mangaActivity = appSource("book/manga/ReadMangaActivity.kt")
-            .section("override fun changeTo(", "override fun updateColorFilter")
 
         assertTrue(readActivity.contains("viewModel.changeTo(book, toc, onSuccess)"))
         assertTrue(audioActivity.contains("viewModel.changeTo(source, book, toc, onSuccess)"))
         assertTrue(infoActivity.contains("viewModel.changeTo(source, book, toc, onSuccess)"))
-        assertTrue(mangaActivity.contains("viewModel.changeTo(book, toc, onSuccess)"))
         listOf(readActivity, audioActivity).forEach { changeTo ->
             assertTrue(
                 changeTo.indexOf("appDb.bookDao.insert(book)") <

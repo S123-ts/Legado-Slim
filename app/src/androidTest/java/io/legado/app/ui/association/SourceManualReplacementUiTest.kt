@@ -406,57 +406,6 @@ class SourceManualReplacementUiTest {
         }
     }
 
-    @Test fun legacyManualFlagAndBackupRemainUnchanged() = runBlocking {
-        assertFalse(AppConfig.manualReplaceRule)
-        prefs.edit().putBoolean(PreferKey.manualReplaceRule, true).commit()
-        ActivityScenario.launch(ReplaceRuleActivity::class.java).use { scenario ->
-            assertTrue(AppConfig.manualReplaceRule)
-            openActionBarOverflowOrOptionsMenu(context)
-            scenario.onActivity {
-                val item = it.findViewById<Toolbar>(R.id.toolbar).menu.findItem(R.id.menu_manual_replace_rule)
-                assertTrue(item.isCheckable)
-                assertTrue(item.isChecked)
-                assertFalse(item.hasSubMenu())
-            }
-            screenshot("source-manual-legacy-switch")
-            onView(withText(R.string.manual_replace_rule)).inRoot(isPlatformPopup()).perform(click())
-            assertFalse(AppConfig.manualReplaceRule)
-            openActionBarOverflowOrOptionsMenu(context)
-            onView(withText(R.string.manual_replace_rule)).inRoot(isPlatformPopup()).perform(click())
-            assertTrue(AppConfig.manualReplaceRule)
-        }
-        BackupConfig.contentKeys.forEach { BackupConfig.ignoreConfig[it] = it != BackupConfig.settingContentKey }
-        val archive = Backup.backupForLanTransferLocked(context).also { files.add(it) }
-        ZipFile(archive).use { zip ->
-            val xml = zip.getInputStream(checkNotNull(zip.getEntry("config.xml"))).bufferedReader().use { it.readText() }
-            assertTrue(xml.contains("name=\"manualReplaceRule\" value=\"true\""))
-        }
-        AppConfig.manualReplaceRule = false
-        Restore.restoreOrThrow(context, archive.toUri(), lanTransfer = true)
-        assertTrue(AppConfig.manualReplaceRule)
-        for (readerManual in listOf(false, true)) for (sourceAutomatic in listOf(false, true)) {
-            AppConfig.manualReplaceRule = readerManual
-            AppConfig.importReplaceSource = sourceAutomatic
-            val book = Book(bookUrl = "https://reader-$id.invalid", name = "Reader $id", origin = "Origin $id")
-            book.setUseReplaceRule(true)
-            val chapter = BookChapter(bookUrl = book.bookUrl, url = "chapter", title = "Seed title")
-            val processed = ReadBook.processChapterContent(book, chapter, "Seed body")
-            assertEquals(if (readerManual) "Seed title" else "Seed+ title", processed.first)
-            val text = processed.second.toString()
-            assertEquals("Source import mode must not change reader behavior", !readerManual, text.contains("Body+"))
-            assertEquals(readerManual, text.contains("Seed body"))
-            for (rss in listOf(false, true)) withImport(rss) { host ->
-                if (sourceAutomatic) host.names("Seed++0", "Seed+1") else host.names("Seed0", "Seed1")
-                host.manualEnabled(!sourceAutomatic)
-                main { host.view<View>(R.id.tv_cancel).performClick() }
-            }
-        }
-        val readerCandidates = appDb.replaceRuleDao.findManualCandidates().map { it.id }
-        assertTrue(rules[0].id in readerCandidates)
-        assertTrue(rules[5].id in readerCandidates)
-        assertTrue(rules.subList(1, 5).none { it.id in readerCandidates })
-    }
-
     private fun source(rss: Boolean, index: Int, name: String = "Seed$index"): Any =
         if (rss) RssSource(sourceUrl = urls[index], sourceName = name, ruleArticles = "article")
         else BookSource(bookSourceUrl = urls[index], bookSourceName = name, searchUrl = "/search")

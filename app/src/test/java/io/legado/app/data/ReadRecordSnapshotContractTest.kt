@@ -27,10 +27,6 @@ class ReadRecordSnapshotContractTest {
             projectFile("src/main/java/io/legado/app/model/ReadBook.kt")
                 .contains("readRecord.updateSnapshot(currentBook, durChapterIndex, durChapterPos)")
         )
-        assertTrue(
-            projectFile("src/main/java/io/legado/app/model/ReadManga.kt")
-                .contains("readRecord.updateSnapshot(currentBook, durChapterIndex, durChapterPos)")
-        )
         val audio = projectFile("src/main/java/io/legado/app/model/AudioPlay.kt")
         assertTrue(audio.contains("fun updateSnapshot(book: Book, chapterIndex: Int, chapterPos: Int)"))
         assertTrue(audio.contains("readTimeTracker.updateSnapshot(it, durChapterIndex, durChapterPos)"))

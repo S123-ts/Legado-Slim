@@ -166,32 +166,6 @@ class BookMemoDialogTest {
         assertEquals("", appDb.bookMemoDao.get(book.bookUrl)!!.content)
     }
 
-    @Test fun actualLanArchiveRestoresMemoWithoutResurrectingClearedContent() = runBlocking {
-        BackupConfig.contentKeys.forEach { BackupConfig.ignoreConfig[it] = it != BackupConfig.bookshelfContentKey }
-        BackupConfig.ignoreConfig["localBook"] = false
-        appDb.bookMemoDao.save(book.bookUrl, "# Saved in the archive", 100)
-        val backup = Backup.backupForLanTransferLocked(context).also { archive = it }
-        ZipFile(backup).use { zip ->
-            val entry = checkNotNull(zip.getEntry("bookMemo.json"))
-            val json = zip.getInputStream(entry).bufferedReader().use { it.readText() }
-            val memos = GSON.fromJsonArray<BookMemo>(json).getOrThrow()
-            assertEquals("# Saved in the archive", memos.single { it.bookUrl == book.bookUrl }.content)
-        }
-        appDb.bookDao.delete(book)
-        Restore.restoreOrThrow(context, backup.toUri(), lanTransfer = true)
-        assertEquals("# Saved in the archive", appDb.bookMemoDao.get(book.bookUrl)!!.content)
-        val changed = book.copy(bookUrl = book.bookUrl + "-changed")
-        appDb.bookDao.replace(book, changed)
-        appDb.bookMemoDao.save(changed.bookUrl, "New memo after changing source", 101)
-        // Restoring the old shelf URL also replaces the row through its name/author index.
-        Restore.restoreOrThrow(context, backup.toUri(), lanTransfer = true)
-        assertNull(appDb.bookMemoDao.get(changed.bookUrl))
-        assertEquals("New memo after changing source", appDb.bookMemoDao.get(book.bookUrl)!!.content)
-        appDb.bookMemoDao.save(book.bookUrl, "", 102)
-        Restore.restoreOrThrow(context, backup.toUri(), lanTransfer = true)
-        assertEquals("", appDb.bookMemoDao.get(book.bookUrl)!!.content)
-    }
-
     private fun memoDialog(activity: ReadBookActivity) =
         activity.supportFragmentManager.fragments.filterIsInstance<BookMemoDialog>().firstOrNull()
 

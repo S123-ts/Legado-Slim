@@ -12,7 +12,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.legado.app.R
 import io.legado.app.data.appDb
-import io.legado.app.data.entities.DictRule
 import io.legado.app.data.entities.HighlightRule
 import io.legado.app.data.entities.HighlightRuleFile
 import io.legado.app.data.entities.ReplaceRule
@@ -20,8 +19,6 @@ import io.legado.app.data.entities.TxtTocRule
 import io.legado.app.help.config.ReplacePreviewConfig
 import io.legado.app.ui.book.toc.rule.TxtTocRuleActivity
 import io.legado.app.ui.book.toc.rule.TxtTocRuleAdapter
-import io.legado.app.ui.dict.rule.DictRuleActivity
-import io.legado.app.ui.dict.rule.DictRuleAdapter
 import io.legado.app.ui.replace.ReplaceRuleActivity
 import io.legado.app.ui.replace.ReplaceRuleAdapter
 import io.legado.app.ui.highlight.HighlightRuleActivity
@@ -136,33 +133,6 @@ class RuleSelectionShareTest {
             assertEquals(GSON.toJson(rule), GSON.toJson(restored))
         } finally {
             appDb.txtTocRuleDao.delete(rule, other)
-        }
-    }
-
-    @Test
-    fun dictionarySelectionSharesTheCompleteUrlAndDisplayRule() {
-        val id = UUID.randomUUID().toString()
-        val rule = DictRule(
-            name = "Share dictionary $id",
-            urlRule = "https://example.invalid/dictionary?q={{key}}&lang=zh#result",
-            showRule = "@js:result + ' & ? # '", enabled = false, sortNumber = 42,
-        )
-        val other = DictRule(name = "Unselected dictionary $id", urlRule = "https://example.invalid/other")
-        appDb.dictRuleDao.insert(rule, other)
-        try {
-            val json = shareSelection(DictRuleActivity::class.java, R.menu.dict_rule_sel) { activity ->
-                val adapter = activity.findViewById<RecyclerView>(R.id.recycler_view).adapter as DictRuleAdapter
-                val index = adapter.getItems().indexOfFirst { it.name == rule.name }
-                if (index < 0 || adapter.getItems().none { it.name == other.name }) false else {
-                    assertTrue(adapter.dragSelectCallback.onSelectChange(index, true))
-                    assertEquals(listOf(rule.name), adapter.selection.map { it.name })
-                    true
-                }
-            }
-            val restored = GSON.fromJsonArray<DictRule>(json).getOrThrow().single()
-            assertEquals(GSON.toJson(rule), GSON.toJson(restored))
-        } finally {
-            appDb.dictRuleDao.delete(rule, other)
         }
     }
 

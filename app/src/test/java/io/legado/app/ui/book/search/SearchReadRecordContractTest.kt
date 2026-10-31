@@ -54,8 +54,6 @@ class SearchReadRecordContractTest {
         listOf(
             Triple("src/main/java/io/legado/app/model/ReadBook.kt",
                 "val currentBook = book?.copy() ?: return", "getRecord(AppConst.androidId, book.name, book.author)"),
-            Triple("src/main/java/io/legado/app/model/ReadManga.kt",
-                "val currentBook = book?.copy() ?: return", "getRecord(AppConst.androidId, book.name, book.author)"),
         ).forEach { (path, authorCapture, authorAssignment) ->
             val source = projectFile(path).readText().replace(Regex("\\s+"), " ")
             assertTrue(path, source.contains(authorCapture))

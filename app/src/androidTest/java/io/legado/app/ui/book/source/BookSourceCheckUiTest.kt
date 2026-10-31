@@ -259,7 +259,8 @@ class BookSourceCheckUiTest {
         BackupConfig.contentKeys.forEach {
             BackupConfig.ignoreConfig[it] = it != BackupConfig.settingContentKey
         }
-        val backup = Backup.backupForLanTransferLocked(context).also { archive = it }
+        Backup.backupLocked(context, null, uploadWebDav = false)
+        val backup = File(Backup.zipFilePath)
         ZipFile(backup).use { zip ->
             val entry = checkNotNull(zip.getEntry("config.xml"))
             val xml = zip.getInputStream(entry).bufferedReader().use { it.readText() }

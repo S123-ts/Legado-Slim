@@ -62,42 +62,6 @@ class BackupRestoreConcurrencyTest {
         LocalConfig.lastBackup = savedLastBackup
     }
 
-    @Test fun firstLocalRestoreSurvivesConcurrentBackupAndStartupCleanup(): Unit = runBlocking {
-        withTimeout(30_000) {
-            // Hold an active operation while real restore/backup calls queue behind it.
-            backupRestoreMutex.lock()
-            val sentinel = File(Backup.backupPath, "active-$id").apply {
-                parentFile!!.mkdirs()
-                writeText("active operation")
-            }
-            val restore = async(start = CoroutineStart.UNDISPATCHED) { Restore.restore(context, input.toUri()) }
-            val backup = async(start = CoroutineStart.UNDISPATCHED) {
-                Backup.backupForLanTransferLocked(context).also { output = it }
-            }
-            try {
-                assertFalse(restore.isCompleted)
-                assertFalse(backup.isCompleted)
-                assertFalse(appDb.bookDao.has(book.bookUrl))
-                assertFalse(appDb.bookSourceDao.has(source.bookSourceUrl))
-                Backup.clearCache()
-                assertEquals("active operation", sentinel.readText())
-            } finally {
-                backupRestoreMutex.unlock()
-            }
-            restore.await()
-            assertRestored()
-            assertTrue(LocalConfig.lastBackup > 0)
-            ZipFile(backup.await()).use { zip ->
-                val books = zip.getInputStream(checkNotNull(zip.getEntry("bookshelf.json")))
-                    .bufferedReader().use { GSON.fromJsonArray<Book>(it.readText()).getOrThrow() }
-                val sources = zip.getInputStream(checkNotNull(zip.getEntry("bookSource.json")))
-                    .bufferedReader().use { GSON.fromJsonArray<BookSource>(it.readText()).getOrThrow() }
-                assertEquals(12, books.single { it.bookUrl == book.bookUrl }.durChapterIndex)
-                assertEquals(source.bookSourceName, sources.single { it.bookSourceUrl == source.bookSourceUrl }.bookSourceName)
-            }
-        }
-    }
-
     @Test fun cancellingQueuedRestoreDoesNotExtractOrBlockTheNextRestore(): Unit = runBlocking {
         withTimeout(30_000) {
             backupRestoreMutex.lock()

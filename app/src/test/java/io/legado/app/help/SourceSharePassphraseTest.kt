@@ -18,8 +18,6 @@ class SourceSharePassphraseTest {
                 "复制口令到阅读导入#L:example店🛜1刚path钢file店串?key=🕓拜2F五！sy©1800000¥Sigma^",
             SourceSharePassphrase.Type.RSS_SOURCE to
                 "复制口令到阅读导入#L:example店🛜1刚path钢file店串?key=🕓拜2F五！dy©1800000¥Sigma^",
-            SourceSharePassphrase.Type.DICT_RULE to
-                "复制口令到阅读导入#L:example店🛜1刚path钢file店串?key=🕓拜2F五！zd©1800000¥Sigma^",
             SourceSharePassphrase.Type.REPLACE_RULE to
                 "复制口令到阅读导入#L:example店🛜1刚path钢file店串?key=🕓拜2F五！jh©1800000¥Sigma^",
             SourceSharePassphrase.Type.TOC_RULE to
