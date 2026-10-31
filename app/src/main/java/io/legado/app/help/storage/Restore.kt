@@ -175,13 +175,6 @@ object Restore {
         }
         try {
             extractBackup(context, uri, restorePath)
-            if (lanTransfer) {
-                LanBackupTransfer.requireRestoreMediaSpace(
-                    context,
-                    File(restorePath),
-                    includeBackgrounds = !BackupConfig.ignoreReadConfig,
-                )
-            }
             restoreUnpacked(restorePath, lanTransfer)
         } finally {
             if (lanTransfer) FileUtils.delete(restorePath)
@@ -568,9 +561,6 @@ object Restore {
             if ("readRecordFixedCard" !in map) edit.putBoolean("readRecordFixedCard", true)
             for (key in listOf(PreferKey.readRecordCover, PreferKey.readRecordCoverDark)) {
                 if (key !in map && BackupConfig.keyIsNotIgnore(key)) edit.remove(key)
-            }
-            if (!BackupConfig.ignoreReadConfig && PreferKey.mangaRightToLeft !in map) {
-                edit.putBoolean(PreferKey.mangaRightToLeft, false)
             }
             edit.apply()
         }

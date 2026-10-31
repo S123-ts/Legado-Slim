@@ -164,7 +164,6 @@ class HighlightFragment : VMBaseFragment<TocViewModel>(R.layout.fragment_bookmar
     }
 
     private fun supportsHighlightPosition(book: Book): Boolean {
-        return !book.isAudio && !book.isVideo &&
-            (book.isLocal || !book.isImage || !AppConfig.showMangaUi)
+        return !book.isAudio && !book.isVideo
     }
 }

@@ -158,54 +158,6 @@ object Backup {
         }
     }
 
-    suspend fun backupForLanTransferLocked(context: Context): File {
-        return backupRestoreMutex.withLock {
-            withContext(IO) {
-                val directory = File(
-                    context.cacheDir,
-                    "lan_backup/send/${UUID.randomUUID()}",
-                ).apply {
-                    check(mkdirs() || isDirectory) { "无法创建传输目录" }
-                }
-                val workingZipFile = File(directory, "tmp_backup.zip")
-                try {
-                    backup(
-                        context,
-                        directory.absolutePath,
-                        lanTransfer = true,
-                        workingZipFile = workingZipFile,
-                    )
-                    directory.listFiles()
-                        ?.singleOrNull { it.isFile && it.extension.equals("zip", true) }
-                        ?: throw NoStackTraceException("生成局域网备份失败")
-                } catch (error: Throwable) {
-                    directory.deleteRecursively()
-                    FileUtils.delete(backupPath)
-                    throw error
-                }
-            }
-        }
-    }
-
-    suspend fun backupBeforeLanRestoreLocked(context: Context) {
-        backupRestoreMutex.withLock {
-            withContext(IO) {
-                check(
-                    backup(
-                        context,
-                        AppConfig.backupPath,
-                        uploadWebDav = false,
-                        contentKeys = BackupConfig.contentKeys
-                            .filterNotTo(hashSetOf()) {
-                                it == BackupConfig.cookieContentKey ||
-                                    it == BackupConfig.runtimeSourceCacheContentKey
-                            },
-                    )
-                ) { "生成恢复前备份失败" }
-            }
-        }
-    }
-
     private suspend fun backup(
         context: Context,
         path: String?,

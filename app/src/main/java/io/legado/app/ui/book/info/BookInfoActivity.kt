@@ -81,7 +81,6 @@ import io.legado.app.ui.book.changecover.ChangeCoverDialog
 import io.legado.app.ui.book.changesource.ChangeBookSourceDialog
 import io.legado.app.ui.book.group.GroupSelectDialog
 import io.legado.app.ui.book.info.edit.BookInfoEditActivity
-import io.legado.app.ui.book.manga.ReadMangaActivity
 import io.legado.app.ui.book.read.ReadBookActivity
 import io.legado.app.ui.book.read.ReadBookActivity.Companion.RESULT_DELETED
 import io.legado.app.ui.book.search.SearchActivity
@@ -1332,8 +1331,7 @@ class BookInfoActivity :
     ) {
         viewModel.getBook(false)?.let { book ->
             val deferHighlightPosition = highlightLayoutTitleLength != null &&
-                !book.isAudio && !book.isVideo &&
-                (book.isLocal || !book.isImage || !AppConfig.showMangaUi)
+                !book.isAudio && !book.isVideo
             if (!deferHighlightPosition) {
                 book.durChapterIndex = index
                 book.durChapterPos = pos
@@ -1500,8 +1498,7 @@ class BookInfoActivity :
             else -> readBookResult.launch(
                 Intent(
                     this,
-                    if (!book.isLocal && book.isImage && AppConfig.showMangaUi) ReadMangaActivity::class.java
-                    else ReadBookActivity::class.java
+                    ReadBookActivity::class.java
                 ).apply {
                     putExtra("bookUrl", book.bookUrl)
                     putExtra("inBookshelf", viewModel.inBookshelf)

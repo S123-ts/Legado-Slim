@@ -47,7 +47,6 @@ import io.legado.app.ui.about.CrashLogsDialog
 import io.legado.app.ui.about.UpdateDialog
 import io.legado.app.ui.autoTask.ImportAutoTaskDialog
 import io.legado.app.ui.association.ImportBookSourceDialog
-import io.legado.app.ui.association.ImportDictRuleDialog
 import io.legado.app.ui.association.ImportHttpTtsDialog
 import io.legado.app.ui.association.ImportReplaceRuleDialog
 import io.legado.app.ui.association.ImportRssSourceDialog
@@ -561,9 +560,6 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
                         SourceSharePassphrase.Type.RSS_SOURCE ->
                             showDialogFragment(ImportRssSourceDialog(value.url))
 
-                        SourceSharePassphrase.Type.DICT_RULE ->
-                            showDialogFragment(ImportDictRuleDialog(value.url))
-
                         SourceSharePassphrase.Type.REPLACE_RULE ->
                             showDialogFragment(ImportReplaceRuleDialog(value.url))
 
@@ -691,3 +687,4 @@ class MainActivity : VMBaseActivity<ActivityMainBinding, MainViewModel>(),
     }
 
 }
+

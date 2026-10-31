@@ -122,7 +122,6 @@ import io.legado.app.ui.book.source.edit.BookSourceEditActivity
 import io.legado.app.ui.book.toc.TocActivityResult
 import io.legado.app.ui.book.toc.rule.TxtTocRuleDialog
 import io.legado.app.ui.browser.WebViewActivity
-import io.legado.app.ui.dict.DictDialog
 import io.legado.app.ui.file.HandleFileContract
 import io.legado.app.ui.highlight.HighlightRuleActivity
 import io.legado.app.ui.highlight.edit.HighlightRuleEditDialog
@@ -1374,11 +1373,6 @@ class ReadBookActivity : BaseReadBookActivity(),
             R.id.menu_search_content -> {
                 viewModel.searchContentQuery = selectedText
                 openSearchActivity(selectedText)
-                return true
-            }
-
-            R.id.menu_dict -> {
-                showDialogFragment(DictDialog(selectedText))
                 return true
             }
         }
@@ -3096,3 +3090,4 @@ class ReadBookActivity : BaseReadBookActivity(),
 internal fun visibleHighlightStyle(style: HighlightStyle?): HighlightStyle {
     return style?.takeUnless { it.isEmpty } ?: HighlightStyles.presets.first()
 }
+

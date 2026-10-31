@@ -22,7 +22,6 @@ import io.legado.app.help.config.AppConfig
 import io.legado.app.help.source.exploreKinds
 import io.legado.app.model.AudioPlay
 import io.legado.app.model.ReadBook
-import io.legado.app.model.ReadManga
 import io.legado.app.model.SourceCallBack
 import io.legado.app.model.webBook.WebBook
 import io.legado.app.utils.printOnDebug
@@ -308,11 +307,6 @@ class ExploreShowViewModel(application: Application) : BaseViewModel(application
         mergeActiveShelfBook(AudioPlay.book, book)?.let {
             AudioPlay.book = it
             AudioPlay.inBookshelf = true
-            if (it !== book && it.bookUrl == book.bookUrl) activeBooks.add(it)
-        }
-        mergeActiveShelfBook(ReadManga.book, book)?.let {
-            ReadManga.book = it
-            ReadManga.inBookshelf = true
             if (it !== book && it.bookUrl == book.bookUrl) activeBooks.add(it)
         }
         return activeBooks

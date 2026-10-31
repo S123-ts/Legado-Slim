@@ -88,7 +88,6 @@ class FileAssociationActivity :
                 "httpTts" -> showDialogFragment(ImportHttpTtsDialog(it.second, true))
                 "theme" -> showDialogFragment(ImportThemeDialog(it.second, true))
                 "txtRule" -> showDialogFragment(ImportTxtTocRuleDialog(it.second, true))
-                "dictRule" -> showDialogFragment(ImportDictRuleDialog(it.second, true))
                 "autoTask" -> showDialogFragment(ImportAutoTaskDialog(it.second, true))
                 "bookshelf", "backup" -> showDialogFragment(ImportDataDialog(it.first, it.second))
             }
@@ -232,3 +231,5 @@ internal fun isSupportedSharedImportMimeType(mimeType: String?): Boolean =
         mimeType.equals("application/azw3", ignoreCase = true) ||
         mimeType.equals("application/x-mobi8-ebook", ignoreCase = true) ||
         mimeType.equals("application/octet-stream", ignoreCase = true)
+
+

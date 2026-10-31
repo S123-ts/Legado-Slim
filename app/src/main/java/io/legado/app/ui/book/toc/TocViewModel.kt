@@ -16,7 +16,6 @@ import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.globalExecutor
 import io.legado.app.model.AudioPlay
 import io.legado.app.model.ReadBook
-import io.legado.app.model.ReadManga
 import io.legado.app.model.localBook.LocalBook
 import io.legado.app.utils.FileDoc
 import io.legado.app.utils.GSON
@@ -64,7 +63,7 @@ class TocViewModel(application: Application) : BaseViewModel(application) {
             bookData.value?.apply {
                 if (isPdf || isEpub) {
                     setReverseToc(!getReverseToc())
-                    listOf(ReadBook.book, ReadManga.book, AudioPlay.book)
+                    listOf(ReadBook.book, AudioPlay.book)
                         .filter { it?.bookUrl == bookUrl }
                         .forEach { it?.setReverseToc(getReverseToc()) }
                     appDb.bookDao.updateReverseToc(bookUrl, getReverseToc())
@@ -72,7 +71,7 @@ class TocViewModel(application: Application) : BaseViewModel(application) {
                 }
                 // Keep source parsing and index-based reading/cache identities unchanged.
                 setReverseTocDisplay(!getReverseTocDisplay())
-                listOf(ReadBook.book, ReadManga.book, AudioPlay.book)
+                listOf(ReadBook.book, AudioPlay.book)
                     .filter { it?.bookUrl == bookUrl }
                     .forEach { it?.setReverseTocDisplay(getReverseTocDisplay()) }
                 appDb.bookDao.updateReverseTocDisplay(bookUrl, getReverseTocDisplay())
@@ -101,7 +100,7 @@ class TocViewModel(application: Application) : BaseViewModel(application) {
     }
 
     private fun updateActiveReaderBooks(bookUrl: String, expanded: Boolean) {
-        listOf(ReadBook.book, ReadManga.book, AudioPlay.book)
+        listOf(ReadBook.book, AudioPlay.book)
             .filter { it?.bookUrl == bookUrl }
             .forEach { it?.setTocExpanded(expanded) }
     }
