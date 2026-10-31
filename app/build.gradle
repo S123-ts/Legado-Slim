@@ -204,6 +204,14 @@ android {
     }
 }
 
+androidComponents {
+    beforeVariants(selector().withBuildType('debug')) { variant ->
+        // 未混淆的 HtmlUnit 含 MethodHandle/VarHandle 调用，D8 要求 min-api 26；
+        // release 走 R8 会把这类调用内联掉，故仍保持 23。
+        variant.minSdk = 26
+    }
+}
+
 dependencies {
     //compileOnly "com.android.tools.build:gradle:$agp_version"
     //noinspection GradleDependency,GradlePackageUpdate
