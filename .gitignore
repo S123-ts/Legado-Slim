@@ -1,0 +1,42 @@
+*.iml
+.gradle
+local.properties
+.DS_Store
+/build
+build/
+/captures
+.externalNativeBuild
+/release
+/tmp
+/legado-booksource/
+# 抓取与核对的一次性脚本、候选数据（.qoder/rules 需要入库，故只忽略 tmp 与 tmp-archive*）
+/.qoder/tmp/
+/.qoder/tmp-archive*/
+node_modules/
+/app/app
+/app/google
+/app/gradle.properties
+package-lock.json
+.idea/
+# Kotlin 2.0
+.kotlin/
+.cxx
+.vscode
+
+# 本地产物与工具目录，不入库
+/.qoder-credits/
+/.workbuddy/
+/.workbuddy-ai/
+/tts-sources/
+# AI 协作入口与跨工具记忆索引（与 .qoder/rules 不同，只留本机）
+/AGENTS.md
+/.agent-memory/
+
+# 构建日志与崩溃转储
+*.log
+*.stackdump
+
+
+/doc/
+/.qoder/
+/legado-booksource-audit-repair/
