@@ -36,6 +36,9 @@ package-lock.json
 *.log
 *.stackdump
 
+# 内网日志接收服务的收件目录
+/tools/intranet-update/logs/
+
 
 /doc/
 /.qoder/

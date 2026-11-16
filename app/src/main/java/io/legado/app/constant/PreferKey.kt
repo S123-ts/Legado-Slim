@@ -243,6 +243,7 @@ object PreferKey {
     const val updateServerUrl = "updateServerUrl"
     const val updateGitHubRepo = "updateGitHubRepo"
     const val updateChannel = "updateChannel"
+    const val logUploadUrl = "logUploadUrl"
 
     const val dThemeName = "durThemeName"
     const val dNThemeName = "durThemeNameNight"

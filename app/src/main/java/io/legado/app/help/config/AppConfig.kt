@@ -1033,6 +1033,20 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
         set(value) {
             appCtx.putPrefString(PreferKey.updateChannel, value)
         }
+
+    /**
+     * 内网日志上传地址，默认跟着内网更新服务器那台电脑走
+     */
+    var logUploadUrl: String?
+        get() = appCtx.getPrefString(PreferKey.logUploadUrl)?.takeIf { it.isNotBlank() }
+        set(value) {
+            val url = value?.trim()?.takeIf { it.isNotBlank() }
+            if (url == null) {
+                appCtx.removePref(PreferKey.logUploadUrl)
+            } else {
+                appCtx.putPrefString(PreferKey.logUploadUrl, url)
+            }
+        }
 }
 
 internal fun normalizeJsSourceApiToken(value: String?): String? {

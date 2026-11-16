@@ -1082,6 +1082,8 @@
     <string name="reverse_content">Reverse content</string>
     <string name="debug">Debug</string>
     <string name="crash_log">Crash log</string>
+    <string name="upload_log">Upload logs</string>
+    <string name="upload_log_hint">Package crash logs and other logs, then upload to the LAN computer. Edit the address below if the computer IP changed.</string>
     <string name="use_zh_layout">Custom Chinese line feed</string>
     <string name="image_style">Style of Images</string>
     <string name="system_tts">System tts</string>

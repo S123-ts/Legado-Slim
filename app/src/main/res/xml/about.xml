@@ -4,22 +4,9 @@
 
     <io.legado.app.lib.prefs.Preference
         android:key="contributors"
+        android:selectable="false"
         android:summary="@string/contributors_summary"
         android:title="@string/contributors"
-        app:iconSpaceReserved="false" />
-
-    <io.legado.app.lib.prefs.Preference
-        android:key="update_log"
-        android:title="@string/update_log"
-        app:allowDividerAbove="false"
-        app:allowDividerBelow="false"
-        app:iconSpaceReserved="false" />
-
-    <io.legado.app.lib.prefs.Preference
-        android:key="app_update"
-        android:title="@string/app_update"
-        app:allowDividerAbove="false"
-        app:allowDividerBelow="false"
         app:iconSpaceReserved="false" />
 
     <io.legado.app.lib.prefs.PreferenceCategory
@@ -37,6 +24,11 @@
         <io.legado.app.lib.prefs.Preference
             android:key="saveLog"
             android:title="@string/save_log"
+            app:iconSpaceReserved="false" />
+
+        <io.legado.app.lib.prefs.Preference
+            android:key="uploadLog"
+            android:title="@string/upload_log"
             app:iconSpaceReserved="false" />
 
         <io.legado.app.lib.prefs.Preference

@@ -4,16 +4,16 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import androidx.annotation.StringRes
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import io.legado.app.R
-import io.legado.app.constant.AppConst.appInfo
 import io.legado.app.constant.AppLog
+import io.legado.app.databinding.DialogEditTextBinding
 import io.legado.app.help.CrashHandler
+import io.legado.app.help.LogUpload
 import io.legado.app.help.config.AppConfig
-import io.legado.app.help.update.AppUpdate
 import io.legado.app.help.coroutine.Coroutine
+import io.legado.app.lib.dialogs.alert
 import io.legado.app.ui.widget.dialog.TextDialog
 import io.legado.app.utils.FileDoc
 import io.legado.app.utils.compress.ZipUtils
@@ -25,7 +25,6 @@ import io.legado.app.utils.find
 import io.legado.app.utils.list
 import io.legado.app.utils.openInputStream
 import io.legado.app.utils.openOutputStream
-import io.legado.app.utils.openUrl
 import io.legado.app.utils.sendMail
 import io.legado.app.utils.sendToClip
 import io.legado.app.utils.showDialogFragment
@@ -38,27 +37,6 @@ class AboutFragment : PreferenceFragmentCompat() {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.about)
-        findPreference<Preference>("update_log")?.summary =
-            "${getString(R.string.version)} ${appInfo.versionName}"
-        refreshAppUpdateSummary()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        refreshAppUpdateSummary()
-    }
-
-    /**
-     * 两条更新通道的地址都可能变，每次回到关于页重新取
-     */
-    private fun refreshAppUpdateSummary() {
-        val lanUrl = AppConfig.updateServerUrl
-        val repo = AppConfig.updateGitHubRepo?.takeIf { it.isNotBlank() }
-            ?: AppUpdate.DEFAULT_GITHUB_REPO
-        val lanText = lanUrl?.takeIf { it.isNotBlank() } ?: AppUpdate.DEFAULT_LAN_URL
-        findPreference<Preference>("app_update")?.summary =
-            getString(R.string.update_summary_lan, lanText) + "\n" +
-                    getString(R.string.update_summary_github, repo)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -68,9 +46,6 @@ class AboutFragment : PreferenceFragmentCompat() {
 
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
         when (preference.key) {
-            "contributors" -> openUrl(R.string.contributors_url)
-            "update_log" -> showMdFile(getString(R.string.update_log), "updateLog.md")
-            "app_update" -> showDialogFragment<AppUpdateDialog>()
             "mail" -> requireContext().sendMail(getString(R.string.email))
             "license" -> showMdFile(getString(R.string.license), "LICENSE.md")
             "disclaimer" -> showMdFile(getString(R.string.disclaimer), "disclaimer.md")
@@ -78,14 +53,10 @@ class AboutFragment : PreferenceFragmentCompat() {
             "gzGzh" -> requireContext().sendToClip(getString(R.string.legado_gzh))
             "crashLog" -> showDialogFragment<CrashLogsDialog>()
             "saveLog" -> saveLog()
+            "uploadLog" -> uploadLog()
             "createHeapDump" -> createHeapDump()
         }
         return super.onPreferenceTreeClick(preference)
-    }
-
-    @Suppress("SameParameterValue")
-    private fun openUrl(@StringRes addressID: Int) {
-        requireContext().openUrl(getString(addressID))
     }
 
     /**
@@ -130,6 +101,50 @@ class AboutFragment : PreferenceFragmentCompat() {
             appCtx.toastOnUi("已保存至备份目录")
         }.onError {
             AppLog.put("保存日志出错\n${it.localizedMessage}", it, true)
+        }
+    }
+
+    /**
+     * 内网日志上传：把崩溃日志和其他日志打包后传到内网电脑
+     */
+    private fun uploadLog() {
+        val urlInput = DialogEditTextBinding.inflate(layoutInflater).apply {
+            editView.setText(LogUpload.currentUrl())
+        }
+        alert(R.string.upload_log) {
+            setMessage(getString(R.string.upload_log_hint))
+            customView { urlInput.root }
+            okButton {
+                startUploadLog(urlInput.editView.text?.toString())
+            }
+            cancelButton()
+        }
+    }
+
+    private fun startUploadLog(rawUrl: String?) {
+        val url = LogUpload.normalizeUrl(rawUrl)
+        if (url == null) {
+            appCtx.toastOnUi("上传地址不对：${rawUrl ?: ""}")
+            return
+        }
+        AppConfig.logUploadUrl = url
+        appCtx.toastOnUi("正在打包日志")
+        Coroutine.async {
+            LogUpload.uploadBundle(url)
+        }.onSuccess { result ->
+            if (!isAdded) return@onSuccess
+            alert(R.string.upload_log) {
+                setMessage(result)
+                okButton()
+                negativeButton(R.string.copy_text) { appCtx.sendToClip(result) }
+            }
+        }.onError {
+            AppLog.put("上传日志失败\n${it.localizedMessage}", it)
+            if (!isAdded) return@onError
+            alert(R.string.upload_log) {
+                setMessage(it.localizedMessage ?: "上传失败")
+                okButton()
+            }
         }
     }
 
