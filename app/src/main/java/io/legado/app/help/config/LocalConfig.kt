@@ -69,8 +69,41 @@ by appCtx.getSharedPreferences("local", Context.MODE_PRIVATE) {
         get() = !isLastVersion(7, "rssSourceVersion")
 
     val needUpBookSources: Boolean
-        // 2026-11-15 提到 8：内置书源 44→43（下架「异轻纵然(代)」），不提版本老设备不会触发导入与剔除
-        get() = !isLastVersion(8, "bookSourceVersion")
+        // 2026-11-23 提到 9：内置书源 43→1（按用户要求只保留 https://sudugu520.com），不提版本老设备不会触发导入与剔除
+        get() = !isLastVersion(9, "bookSourceVersion")
+
+    /**
+     * 在线书源包已应用的版本。未设置时回退到内置版本戳，
+     * 这样新装用户不会因为在线清单版本等于内置版本而被误提示更新。
+     */
+    var onlineBookSourceVersion: Int
+        get() = getInt("onlineBookSourceVersion", getInt("bookSourceVersion", 0))
+        set(value) {
+            edit { putInt("onlineBookSourceVersion", value) }
+        }
+
+    /**
+     * 内置书源编号 -> URL 的基线（JSON 对象）。
+     * 同步时按编号识别内置源：只更新/新增/下架基线内有编号的源，
+     * 用户自己导入的源不在此映射中，不会被改动。
+     * 空字符串表示尚无基线（老用户首次升级），此时只建立基线不删除。
+     */
+    var builtinSourceIds: String
+        get() = getString("builtinSourceIds", "") ?: ""
+        set(value) {
+            edit { putString("builtinSourceIds", value) }
+        }
+
+    /**
+     * 用户在书源管理里主动删除的内置源 URL（JSON 数组）。
+     * 升级/内置包更新时跳过这些 URL，避免删掉后又被自动导回来。
+     * 只影响自动导入，不影响用户手动导入或在线包主动更新。
+     */
+    var removedBuiltinSourceUrls: String
+        get() = getString("removedBuiltinSourceUrls", "[]") ?: "[]"
+        set(value) {
+            edit { putString("removedBuiltinSourceUrls", value) }
+        }
 
     var versionCode
         get() = getLong(versionCodeKey, 0)

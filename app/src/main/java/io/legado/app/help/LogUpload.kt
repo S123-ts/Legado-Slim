@@ -6,7 +6,6 @@ import io.legado.app.constant.AppLog
 import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.http.okHttpClient
-import io.legado.app.help.update.AppUpdate
 import io.legado.app.utils.compress.ZipUtils
 import io.legado.app.utils.createFileReplace
 import io.legado.app.utils.createFolderIfNotExist
@@ -51,12 +50,14 @@ object LogUpload {
     @Suppress("SimpleDateFormat")
     private val infoTimeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
+    /** 没配置过内网地址时的兜底主机，用户可在上传弹窗里改 */
+    private const val DEFAULT_LAN_HOST = "http://192.168.1.6:8765"
+
     /**
-     * 默认上传地址：跟着内网更新地址走，只换端口和路径，
-     * 电脑换了 IP 只要改内网更新地址，这里会一起跟上
+     * 默认上传地址：沿用以前的内网更新地址主机（如果还留着），只换端口和路径
      */
     fun defaultUrl(): String {
-        val base = AppConfig.updateServerUrl ?: AppUpdate.DEFAULT_LAN_URL
+        val base = AppConfig.updateServerUrl ?: DEFAULT_LAN_HOST
         val url = base.toHttpUrlOrNull()
         val scheme = url?.scheme ?: "http"
         val host = url?.host ?: "127.0.0.1"
@@ -64,7 +65,8 @@ object LogUpload {
     }
 
     /**
-     * 补协议、校验地址，返回 null 表示填的不是合法 http(s) 地址
+     * 补协议、校验地址，返回 null 表示地址不合法或不是内网地址。
+     * 日志里有书源 URL、Cookie、搜索词，只允许传到回环 / RFC1918 / `.local` 主机。
      */
     fun normalizeUrl(raw: String?): String? {
         var text = raw?.trim().orEmpty()
@@ -72,7 +74,27 @@ object LogUpload {
         if (!text.startsWith("http://", true) && !text.startsWith("https://", true)) {
             text = "http://$text"
         }
-        return text.toHttpUrlOrNull()?.toString()
+        val parsed = text.toHttpUrlOrNull() ?: return null
+        return if (isTrustedHost(parsed.host)) parsed.toString() else null
+    }
+
+    /**
+     * 上传目标只接受回环 / 私网 / `.local`，避免日志被误发到公网。
+     */
+    private fun isTrustedHost(host: String): Boolean {
+        val h = host.lowercase(Locale.US)
+        if (h == "localhost" || h == "127.0.0.1" || h == "::1") return true
+        if (h.endsWith(".local")) return true
+        val parts = h.split('.')
+        if (parts.size == 4 && parts.all { it.toIntOrNull() != null }) {
+            val a = parts[0].toInt()
+            val b = parts[1].toInt()
+            return a == 10 ||
+                    (a == 172 && b in 16..31) ||
+                    (a == 192 && b == 168) ||
+                    (a == 169 && b == 254)
+        }
+        return false
     }
 
     /**
@@ -136,6 +158,10 @@ object LogUpload {
      * 这样接收端不用解析 multipart，二进制整段落盘就行。
      */
     fun upload(url: String, zipFile: File): String {
+        val host = url.toHttpUrlOrNull()?.host
+        if (host == null || !isTrustedHost(host)) {
+            throw NoStackTraceException("仅支持内网地址：$url")
+        }
         val request = Request.Builder()
             .url(url)
             .post(zipFile.asRequestBody("application/zip".toMediaTypeOrNull()))
@@ -184,6 +210,16 @@ object LogUpload {
     }
 
     /**
+     * 脱敏：日志里出现的 Cookie / Authorization / token 只保留键名。
+     */
+    private val sensitivePattern = Regex(
+        "(?i)(cookie|authorization|x-legado-token|token)\\s*[:=]\\s*[^\\s,;]+"
+    )
+
+    private fun maskSensitive(text: String): String =
+        text.replace(sensitivePattern) { match -> "${match.groupValues[1]}=******" }
+
+    /**
      * info.txt：设备与版本信息 + 内存里的 AppLog，看日志时先看这个
      */
     private fun buildInfo(): String {
@@ -205,20 +241,24 @@ object LogUpload {
             appendLine("uploadUrl=${currentUrl()}")
             appendLine()
             appendLine("---- AppLog（内存中最近 100 条）----")
-            appendLine(AppLog.exportText(AppLog.logs))
+            appendLine(maskSensitive(AppLog.exportText(AppLog.logs)))
         }
     }
 
     /**
-     * 导出 logcat，只留最近若干行；导不出来不影响打包
+     * 导出 logcat，只留最近若干行并脱敏；导不出来不影响打包
      */
     private fun dumpLogcat(file: File) {
         runCatching {
-            val process = Runtime.getRuntime().exec("logcat -d -v time -t $LOGCAT_LINES")
-            file.outputStream().use { output ->
-                process.inputStream.copyTo(output)
+            val process = ProcessBuilder("logcat", "-d", "-v", "time", "-t", LOGCAT_LINES.toString())
+                .redirectErrorStream(true)
+                .start()
+            try {
+                val text = process.inputStream.bufferedReader().use { it.readText() }
+                file.writeText(maskSensitive(text))
+            } finally {
+                process.destroy()
             }
-            process.waitFor()
         }.onFailure {
             AppLog.putNotSave("导出 logcat 失败\n${it.localizedMessage}")
         }

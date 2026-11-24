@@ -1362,7 +1362,8 @@ class ReadBookActivity : BaseReadBookActivity(),
                         this,
                         pattern = text,
                         scope = bookName,
-                        bookName = bookName
+                        bookName = bookName,
+                        bookUrl = ReadBook.book?.bookUrl
                     )
                 )
                 return true
@@ -1517,7 +1518,7 @@ class ReadBookActivity : BaseReadBookActivity(),
         lifecycleScope.launch {
             val shouldResetPageOffset = resetPageOffset &&
                 (readPositionVersion == null || isReadPositionVersionCurrent(readPositionVersion))
-            binding.readView.cancelTouchGestures()
+            binding.readView.cancelTouchGesturesOnContentUpdate()
             binding.readView.upContent(relativePosition, shouldResetPageOffset)
             updateCrossPageAloudHighlight()
             scheduleAloudFollowCheck()
@@ -1548,7 +1549,7 @@ class ReadBookActivity : BaseReadBookActivity(),
     ) = withContext(Main.immediate) {
         val shouldResetPageOffset = resetPageOffset &&
             (readPositionVersion == null || isReadPositionVersionCurrent(readPositionVersion))
-        binding.readView.cancelTouchGestures()
+        binding.readView.cancelTouchGesturesOnContentUpdate()
         binding.readView.upContent(relativePosition, shouldResetPageOffset)
         updateCrossPageAloudHighlight()
         scheduleAloudFollowCheck()
@@ -1832,8 +1833,10 @@ class ReadBookActivity : BaseReadBookActivity(),
      * 替换
      */
     override fun openReplaceRule() {
-        // 带上当前书名：在阅读界面新建的替换规则默认只对本书生效
-        replaceActivity.launch(ReplaceRuleActivity.startIntent(this, ReadBook.book?.name))
+        // 带上当前书籍：在阅读界面新建的替换规则默认只对本书生效，按 bookUrl 精确匹配
+        replaceActivity.launch(
+            ReplaceRuleActivity.startIntent(this, ReadBook.book?.name, ReadBook.book?.bookUrl)
+        )
     }
 
     /**
@@ -2935,9 +2938,9 @@ class ReadBookActivity : BaseReadBookActivity(),
         readerOverflowPopup?.dismiss()
         highlightPopup?.dismiss()
         binding.readView.onDestroy()
-        ReadBook.unregister(this)
+        val wasCurrentReader = ReadBook.unregister(this)
         handler.removeCallbacksAndMessages(null) // 清理Handler消息
-        if (!ReadBook.inBookshelf && !isChangingConfigurations) {
+        if (wasCurrentReader && !ReadBook.inBookshelf && !isChangingConfigurations) {
             viewModel.removeFromBookshelf(null)
         }
         if (!BuildConfig.DEBUG) {

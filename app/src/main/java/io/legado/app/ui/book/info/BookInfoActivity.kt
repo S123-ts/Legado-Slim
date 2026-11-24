@@ -191,11 +191,12 @@ class BookInfoActivity :
         if (it.resultCode == RESULT_CANCELED) {
             return@registerForActivityResult
         }
-        book?.let { book ->
-            viewModel.bookSource = appDb.bookSourceDao.getBookSource(book.origin)?.also { source ->
-                viewModel.hasCustomBtn = source.customButton
-            }
-            viewModel.refreshBook(book)
+        val currentBook = book ?: return@registerForActivityResult
+        // 书源查询放到 IO，避免在 ActivityResult 回调（主线程）里同步查库
+        lifecycleScope.launch {
+            val source = withContext(IO) { appDb.bookSourceDao.getBookSource(currentBook.origin) }
+            viewModel.bookSource = source?.also { viewModel.hasCustomBtn = it.customButton }
+            viewModel.refreshBook(currentBook)
         }
     }
     private var chapterChanged = false

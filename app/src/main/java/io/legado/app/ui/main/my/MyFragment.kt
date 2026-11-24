@@ -8,21 +8,15 @@ import android.view.View
 import androidx.preference.Preference
 import io.legado.app.R
 import io.legado.app.base.BaseFragment
-import io.legado.app.constant.EventBus
 import io.legado.app.constant.PreferKey
 import io.legado.app.databinding.FragmentMyConfigBinding
-import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.help.config.ThemeConfig
-import io.legado.app.lib.dialogs.selector
 import io.legado.app.lib.prefs.NameListPreference
-import io.legado.app.lib.prefs.SwitchPreference
 import io.legado.app.lib.prefs.fragment.PreferenceFragment
 import io.legado.app.lib.theme.primaryColor
-import io.legado.app.service.AutoTaskScheduler
-import io.legado.app.service.WebService
 import io.legado.app.ui.about.AboutActivity
+import io.legado.app.ui.about.AppUpdatePreferences
 import io.legado.app.ui.about.ReadRecordActivity
-import io.legado.app.ui.autoTask.AutoTaskActivity
 import io.legado.app.ui.book.bookmark.AllBookmarkActivity
 import io.legado.app.ui.book.source.manage.BookSourceActivity
 import io.legado.app.ui.book.toc.rule.TxtTocRuleActivity
@@ -31,12 +25,9 @@ import io.legado.app.ui.config.ConfigTag
 import io.legado.app.ui.file.FileManageActivity
 import io.legado.app.ui.main.MainFragmentInterface
 import io.legado.app.ui.replace.ReplaceRuleActivity
+import io.legado.app.utils.FileUtils
 import io.legado.app.utils.LogUtils
-import io.legado.app.utils.getPrefBoolean
-import io.legado.app.utils.observeEventSticky
-import io.legado.app.utils.openUrl
-import io.legado.app.utils.putPrefBoolean
-import io.legado.app.utils.sendToClip
+import io.legado.app.utils.externalCache
 import io.legado.app.utils.setEdgeEffectColor
 import io.legado.app.utils.showHelp
 import io.legado.app.utils.startActivity
@@ -80,30 +71,8 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
         SharedPreferences.OnSharedPreferenceChangeListener {
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-            putPrefBoolean(PreferKey.webService, WebService.isRun)
             addPreferencesFromResource(R.xml.pref_main)
-            findPreference<SwitchPreference>("webService")?.onLongClick {
-                if (!WebService.isRun) {
-                    return@onLongClick false
-                }
-                context?.selector(arrayListOf("复制地址", "浏览器打开")) { _, i ->
-                    when (i) {
-                        0 -> context?.sendToClip(it.summary.toString())
-                        1 -> context?.openUrl(it.summary.toString())
-                    }
-                }
-                true
-            }
-            observeEventSticky<String>(EventBus.WEB_SERVICE) {
-                findPreference<SwitchPreference>(PreferKey.webService)?.let {
-                    it.isChecked = WebService.isRun
-                    it.summary = if (WebService.isRun) {
-                        WebService.hostAddress
-                    } else {
-                        getString(R.string.web_service_desc)
-                    }
-                }
-            }
+            AppUpdatePreferences.refreshSummary(this)
             findPreference<NameListPreference>(PreferKey.themeMode)?.let {
                 it.setOnPreferenceChangeListener { _, _ ->
                     view?.post { ThemeConfig.applyDayNight(requireContext()) }
@@ -119,6 +88,7 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
 
         override fun onResume() {
             super.onResume()
+            AppUpdatePreferences.refreshSummary(this)
             preferenceManager.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
         }
 
@@ -132,31 +102,16 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
             key: String?
         ) {
             when (key) {
-                PreferKey.webService -> {
-                    if (requireContext().getPrefBoolean("webService")) {
-                        WebService.start(requireContext())
-                    } else {
-                        WebService.stop(requireContext())
-                    }
-                }
-
-                PreferKey.autoTaskService -> {
-                    val appContext = requireContext().applicationContext
-                    if (appContext.getPrefBoolean(PreferKey.autoTaskService)) {
-                        Coroutine.async { AutoTaskScheduler.refresh(appContext) }
-                    } else {
-                        AutoTaskScheduler.cancelAll(appContext)
-                    }
-                }
-
                 "recordLog" -> LogUtils.upLevel()
             }
         }
 
         override fun onPreferenceTreeClick(preference: Preference): Boolean {
+            if (AppUpdatePreferences.onPreferenceClick(this, preference.key)) {
+                return true
+            }
             when (preference.key) {
                 "bookSourceManage" -> startActivity<BookSourceActivity>()
-                "autoTaskManage" -> startActivity<AutoTaskActivity>()
                 "replaceManage" -> startActivity<ReplaceRuleActivity>()
                 "txtTocRuleManage" -> startActivity<TxtTocRuleActivity>()
                 "bookmark" -> startActivity<AllBookmarkActivity>()
@@ -168,7 +123,16 @@ class MyFragment() : BaseFragment(R.layout.fragment_my_config), MainFragmentInte
                     putExtra("configTag", ConfigTag.THEME_CONFIG)
                 }
 
-                "fileManage" -> startActivity<FileManageActivity>()
+                "fileManage" -> startActivity<FileManageActivity> {
+                    // 直接定位到日志目录，方便查看 appLog
+                    putExtra(
+                        FileManageActivity.EXTRA_START_DIR,
+                        FileUtils.createFolderIfNotExist(
+                            requireContext().externalCache, "logs"
+                        ).absolutePath
+                    )
+                }
+
                 "readRecord" -> startActivity<ReadRecordActivity>()
                 "about" -> startActivity<AboutActivity>()
                 "exit" -> activity?.finish()

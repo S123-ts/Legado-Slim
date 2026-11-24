@@ -21,7 +21,6 @@ import io.legado.app.data.entities.BookSource
 import io.legado.app.data.entities.Bookmark
 import io.legado.app.data.entities.Cache
 import io.legado.app.data.entities.Cookie
-import io.legado.app.data.entities.DictRule
 import io.legado.app.data.entities.HttpTTS
 import io.legado.app.data.entities.HighlightRule
 import io.legado.app.data.entities.KeyboardAssist
@@ -352,9 +351,6 @@ object Restore {
         }
         fileToListT<HttpTTS>(path, "httpTTS.json")?.let {
             appDb.httpTTSDao.insert(*it.toTypedArray())
-        }
-        fileToListT<DictRule>(path, "dictRule.json")?.let {
-            appDb.dictRuleDao.insert(*it.toTypedArray())
         }
         fileToListT<KeyboardAssist>(path, "keyboardAssists.json")?.let {
             appDb.keyboardAssistsDao.deleteAll() //先删除所有,保证和备份数据一样

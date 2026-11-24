@@ -4,7 +4,7 @@
 
 每次发布会在仓库里建一个 release（tag = 版本名），并上传两个资产：
     update.json
-    legado_<versionName>.apk
+    legado_<versionName>_<versionCode>.apk
 
 app 端只要填仓库 owner/repo，就会去
     https://github.com/<owner>/<repo>/releases/latest/download/update.json
@@ -15,6 +15,7 @@ app 端只要填仓库 owner/repo，就会去
     .\push-github.ps1
     .\push-github.ps1 -Token ghp_xxxx
     .\push-github.ps1 -Repo S123-ts/Legado-Slim -Tag 3.26111522
+    .\push-github.ps1 -Proxy http://127.0.0.1:7890    # 直连 github 不通时走本地代理
 
 Token 要求：
     classic PAT 勾选 repo；或 fine-grained PAT 给 Contents: Read and write
@@ -28,7 +29,9 @@ param(
     [string]$Token = "",
     [string]$Apk = "",
     [string]$RepoRoot = "",
-    [switch]$Draft
+    [string]$Proxy = "",
+    [switch]$Draft,
+    [switch]$IncludeBookSource
 )
 
 $ErrorActionPreference = "Stop"
@@ -138,6 +141,11 @@ if ([string]::IsNullOrWhiteSpace($Token)) {
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $apiBase = "https://api.github.com"
+$proxyArgs = @{}
+if (-not [string]::IsNullOrWhiteSpace($Proxy)) {
+    $proxyArgs["Proxy"] = $Proxy
+    Write-Step "走代理 $Proxy"
+}
 $headers = @{
     "Authorization"          = "Bearer $Token"
     "User-Agent"             = "legado-update-push"
@@ -147,7 +155,7 @@ $headers = @{
 
 # 仓库可能改过名，以 API 返回的 full_name 为准
 try {
-    $repoInfo = Invoke-RestMethod -Method Get -Uri "$apiBase/repos/$Repo" -Headers $headers -TimeoutSec 60
+    $repoInfo = Invoke-RestMethod -Method Get -Uri "$apiBase/repos/$Repo" -Headers $headers -TimeoutSec 60 @proxyArgs
 } catch {
     Write-Fail "读取仓库失败：$($_.Exception.Message)"
     Write-Fail "确认 token 有效、有 repo（或 Contents: Read and write）权限，且仓库名正确"
@@ -163,7 +171,7 @@ if ($fullName -ne $Repo) {
 $releaseUrl = "$apiBase/repos/$fullName/releases"
 $existing = $null
 try {
-    $existing = Invoke-RestMethod -Method Get -Uri "$releaseUrl/tags/$Tag" -Headers $headers -TimeoutSec 60 -ErrorAction Stop
+    $existing = Invoke-RestMethod -Method Get -Uri "$releaseUrl/tags/$Tag" -Headers $headers -TimeoutSec 60 @proxyArgs -ErrorAction Stop
 } catch {
     $existing = $null
 }
@@ -173,7 +181,7 @@ if ($null -ne $existing) {
     $release = $existing
     $patch = @{ name = $Tag; body = [string]$manifest.updateLog } | ConvertTo-Json
     try {
-        Invoke-RestMethod -Method Patch -Uri "$releaseUrl/$($release.id)" -Headers $headers -Body $patch -ContentType "application/json" -TimeoutSec 60 | Out-Null
+        Invoke-RestMethod -Method Patch -Uri "$releaseUrl/$($release.id)" -Headers $headers -Body $patch -ContentType "application/json" -TimeoutSec 60 @proxyArgs | Out-Null
     } catch {
         Write-Step "更新 release 说明失败（不影响资产）：$($_.Exception.Message)"
     }
@@ -186,20 +194,23 @@ if ($null -ne $existing) {
         prerelease       = $false
         target_commitish = "master"
     } | ConvertTo-Json
-    $release = Invoke-RestMethod -Method Post -Uri $releaseUrl -Headers $headers -Body $body -ContentType "application/json" -TimeoutSec 60
+    $release = Invoke-RestMethod -Method Post -Uri $releaseUrl -Headers $headers -Body $body -ContentType "application/json" -TimeoutSec 60 @proxyArgs
     Write-Step "release 已创建: $($release.html_url)"
 }
 
 $releaseId = $release.id
 
-# ---------- 清掉同名旧资产 ----------
+# ---------- 清掉旧资产 ----------
 
-$assets = Invoke-RestMethod -Method Get -Uri "$releaseUrl/$releaseId/assets" -Headers $headers -TimeoutSec 60
+# apk 文件名带 versionCode 后，同一个版本名（同一小时内）再发布时旧资产不再同名，
+# 按 legado_*.apk 前缀一并清掉，避免 release 里堆两份包。
+$assets = Invoke-RestMethod -Method Get -Uri "$releaseUrl/$releaseId/assets" -Headers $headers -TimeoutSec 60 @proxyArgs
 foreach ($asset in $assets) {
-    if ($asset.name -eq "update.json" -or $asset.name -eq $apkName) {
+    if ($asset.name -eq "update.json" -or $asset.name -like "legado_*.apk" -or
+        $asset.name -eq "booksource.json" -or $asset.name -eq "bookSources.json") {
         Write-Step "删除旧资产 $($asset.name)"
         try {
-            Invoke-RestMethod -Method Delete -Uri "$apiBase/repos/$fullName/releases/assets/$($asset.id)" -Headers $headers -TimeoutSec 60 | Out-Null
+            Invoke-RestMethod -Method Delete -Uri "$apiBase/repos/$fullName/releases/assets/$($asset.id)" -Headers $headers -TimeoutSec 60 @proxyArgs | Out-Null
         } catch {
             Write-Fail "删除 $($asset.name) 失败：$($_.Exception.Message)"
         }
@@ -213,7 +224,7 @@ function Send-Asset([string]$name, [string]$path) {
     Write-Step ("上传 {0} ({1:N1} MB)…" -f $name, ($size / 1MB))
     $url = "https://uploads.github.com/repos/$fullName/releases/$releaseId/assets?name=" + [uri]::EscapeDataString($name)
     $result = Invoke-RestMethod -Method Post -Uri $url -Headers $headers `
-        -ContentType "application/octet-stream" -InFile $path -TimeoutSec 900
+        -ContentType "application/octet-stream" -InFile $path -TimeoutSec 900 @proxyArgs
     Write-Step "已上传 $($result.name) ($($result.size) bytes)"
     return $result
 }
@@ -221,11 +232,24 @@ function Send-Asset([string]$name, [string]$path) {
 $jsonAsset = Send-Asset "update.json" $jsonPath
 $apkAsset = Send-Asset $apkName $apkPath
 
+# 书源在线更新包：可选，随 apk 一起发到同一 release
+if ($IncludeBookSource) {
+    Write-Step "生成书源发布包…"
+    & (Join-Path $Script:RepoRoot "tools\booksource-update\publish-booksource.ps1") -RepoRoot $Script:RepoRoot | Out-Null
+    $bsManifest = Join-Path $Script:RepoRoot "build\booksource-update\booksource.json"
+    $bsPackage = Join-Path $Script:RepoRoot "build\booksource-update\bookSources.json"
+    if (-not (Test-Path -LiteralPath $bsManifest) -or -not (Test-Path -LiteralPath $bsPackage)) {
+        throw "书源发布包生成失败：$bsManifest / $bsPackage"
+    }
+    $null = Send-Asset "booksource.json" $bsManifest
+    $null = Send-Asset "bookSources.json" $bsPackage
+}
+
 # ---------- 验证 ----------
 
 if (-not $Draft) {
     try {
-        $latest = Invoke-RestMethod -Method Get -Uri "$apiBase/repos/$fullName/releases/latest" -Headers $headers -TimeoutSec 60
+        $latest = Invoke-RestMethod -Method Get -Uri "$apiBase/repos/$fullName/releases/latest" -Headers $headers -TimeoutSec 60 @proxyArgs
         Write-Step "latest release = $($latest.tag_name)"
         if ($latest.tag_name -ne $Tag) {
             Write-Fail "注意：latest 当前指向 $($latest.tag_name)，不是 $Tag"
@@ -236,7 +260,7 @@ if (-not $Draft) {
 
     $checkUrl = "https://github.com/$fullName/releases/latest/download/update.json"
     try {
-        $remote = Invoke-RestMethod -Method Get -Uri $checkUrl -TimeoutSec 60 -Headers @{ "User-Agent" = "legado-update-push" }
+        $remote = Invoke-RestMethod -Method Get -Uri $checkUrl -TimeoutSec 60 @proxyArgs -Headers @{ "User-Agent" = "legado-update-push" }
         if ([long]$remote.versionCode -eq [long]$manifest.versionCode) {
             Write-Step "公网清单可读，versionCode $($remote.versionCode) 与本地一致"
         } else {

@@ -50,9 +50,6 @@ internal fun jsonImportType(map: Map<String, *>): String? =
             map.containsKey("themeName") ->
                 "theme"
 
-            map.containsKey("showRule") ->
-                "dictRule"
-
             map.containsKey("name") && map.containsKey("rule") ->
                 "txtRule"
 

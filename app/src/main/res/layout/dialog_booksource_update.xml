@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:id="@+id/vw_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/shape_card_view"
+        android:orientation="vertical"
+        tools:ignore="UselessParent">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/tool_bar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/background_menu"
+            android:elevation="5dp"
+            android:theme="?attr/actionBarStyle"
+            app:displayHomeAsUp="false"
+            app:fitStatusBar="false"
+            app:popupTheme="@style/AppTheme.PopupOverlay"
+            app:title="@string/booksource_update"
+            app:titleTextAppearance="@style/ToolbarTitle" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <RadioGroup
+                android:id="@+id/rg_channel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rb_lan"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="40dp"
+                    android:text="@string/update_channel_lan" />
+
+                <RadioButton
+                    android:id="@+id/rb_github"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="40dp"
+                    android:text="@string/update_channel_github" />
+            </RadioGroup>
+
+            <io.legado.app.ui.widget.text.TextInputLayout
+                android:id="@+id/til_lan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/intranet_server_address">
+
+                <io.legado.app.lib.theme.view.ThemeEditText
+                    android:id="@+id/et_lan"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:importantForAutofill="no"
+                    android:inputType="textUri"
+                    android:lines="1"
+                    android:maxLines="1"
+                    tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+            </io.legado.app.ui.widget.text.TextInputLayout>
+
+            <TextView
+                android:id="@+id/tv_lan_tip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/booksource_update_lan_tip"
+                android:textColor="@color/secondaryText"
+                android:textSize="12sp" />
+
+            <io.legado.app.ui.widget.text.TextInputLayout
+                android:id="@+id/til_github"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/github_repo_address">
+
+                <io.legado.app.lib.theme.view.ThemeEditText
+                    android:id="@+id/et_github"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:importantForAutofill="no"
+                    android:inputType="textUri"
+                    android:lines="1"
+                    android:maxLines="1"
+                    tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+            </io.legado.app.ui.widget.text.TextInputLayout>
+
+            <TextView
+                android:id="@+id/tv_github_tip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/booksource_update_github_tip"
+                android:textColor="@color/secondaryText"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_current_version"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/primaryText"
+                    android:textSize="14sp"
+                    tools:text="当前书源版本 8" />
+
+                <Button
+                    android:id="@+id/btn_check"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minHeight="40dp"
+                    android:text="@string/booksource_check_update" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/primaryText"
+                android:textSize="14sp" />
+
+            <androidx.core.widget.NestedScrollView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:layout_weight="1"
+                android:overScrollMode="ifContentScrolls"
+                tools:ignore="SpeakableTextPresentCheck">
+
+                <TextView
+                    android:id="@+id/tv_log"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/primaryText"
+                    android:textIsSelectable="true"
+                    android:textSize="14sp" />
+            </androidx.core.widget.NestedScrollView>
+
+            <Button
+                android:id="@+id/btn_update"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minHeight="44dp"
+                android:text="@string/booksource_update_download"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</FrameLayout>

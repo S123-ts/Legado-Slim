@@ -61,7 +61,9 @@ data class ReplaceRule(
     var timeoutMillisecond: Long = 3000L,
     //排序
     @ColumnInfo(name = "sortOrder", defaultValue = "0")
-    var order: Int = Int.MIN_VALUE
+    var order: Int = Int.MIN_VALUE,
+    //「只对本书生效」时的书籍标识，按 bookUrl 精确匹配；null 表示按 scope 文本范围匹配
+    var bookUrl: String? = null
 ) : Parcelable {
 
     /** Optional JSON-only explanation sample used by the replacement-rule editor. */

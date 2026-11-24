@@ -20,7 +20,6 @@ import io.legado.app.data.dao.BookmarkDao
 import io.legado.app.data.dao.AutoTaskRuleDao
 import io.legado.app.data.dao.CacheDao
 import io.legado.app.data.dao.CookieDao
-import io.legado.app.data.dao.DictRuleDao
 import io.legado.app.data.dao.HttpTTSDao
 import io.legado.app.data.dao.HighlightRuleDao
 import io.legado.app.data.dao.KeyboardAssistsDao
@@ -47,7 +46,6 @@ import io.legado.app.data.entities.Bookmark
 import io.legado.app.data.entities.AutoTaskRule
 import io.legado.app.data.entities.Cache
 import io.legado.app.data.entities.Cookie
-import io.legado.app.data.entities.DictRule
 import io.legado.app.data.entities.HttpTTS
 import io.legado.app.data.entities.HighlightRule
 import io.legado.app.data.entities.KeyboardAssist
@@ -71,19 +69,21 @@ val appDb by lazy {
     Room.databaseBuilder(appCtx, AppDatabase::class.java, AppDatabase.DATABASE_NAME)
         .fallbackToDestructiveMigrationFrom(false, 1, 2, 3, 4, 5, 6, 7, 8, 9)
         .addMigrations(*DatabaseMigrations.migrations)
+        // 注意：暂保留 allowMainThreadQueries。移除前需完成主线程 DAO 审计：
+        // 例如 BookshelfViewModel:215 的属性初始化、旧 MediaButton 路径都曾在主线程查库。
         .allowMainThreadQueries()
         .addCallback(AppDatabase.dbCallback)
         .build()
 }
 
 @Database(
-    version = 111,
+    version = 113,
     exportSchema = true,
     entities = [Book::class, BookGroup::class, BookSource::class, BookChapter::class,
         ReplaceRule::class, SearchBook::class, SearchKeyword::class, Cookie::class,
         RssSource::class, Bookmark::class, RssArticle::class, RssReadRecord::class,
         RssStar::class, TxtTocRule::class, ReadRecord::class, HttpTTS::class, Cache::class,
-        RuleSub::class, DictRule::class, KeyboardAssist::class, Server::class,
+        RuleSub::class, KeyboardAssist::class, Server::class,
         AutoTaskRule::class, BookHighlight::class, HighlightRule::class, BookSourceCheckState::class,
         BookMemo::class],
     views = [BookSourcePart::class],
@@ -175,7 +175,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract val httpTTSDao: HttpTTSDao
     abstract val cacheDao: CacheDao
     abstract val ruleSubDao: RuleSubDao
-    abstract val dictRuleDao: DictRuleDao
     abstract val keyboardAssistsDao: KeyboardAssistsDao
     abstract val serverDao: ServerDao
 

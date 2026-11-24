@@ -108,10 +108,8 @@ object BackupConfig {
         PreferKey.defaultBookTreeUri,
         PreferKey.webDavDeviceName,
         PreferKey.webDavBookAutoRestore,
-        PreferKey.jsSourceApiToken,
         PreferKey.launcherIcon,
         PreferKey.bitmapCacheSize,
-        PreferKey.webServiceWakeLock,
         PreferKey.readAloudWakeLock,
         PreferKey.audioPlayWakeLock
     )

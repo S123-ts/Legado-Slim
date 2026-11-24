@@ -23,7 +23,6 @@ liveeventbus = "1.8.14"
 markwon = "4.6.2"
 material = "1.14.0"
 media = "1.8.0"
-nanoHttpd = "2.3.1"
 okhttp = "5.4.0"
 brotli = "0.1.2"
 preference = "1.2.1"
@@ -122,10 +121,6 @@ markwon-core = { module = "io.noties.markwon:core", version.ref = "markwon" }
 markwon-image-glide = { module = "io.noties.markwon:image-glide", version.ref = "markwon" }
 markwon-ext-tables = { module = "io.noties.markwon:ext-tables", version.ref = "markwon" }
 markwon-html = { module = "io.noties.markwon:html", version.ref = "markwon" }
-
-
-nanohttpd-nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanoHttpd" }
-nanohttpd-websocket = { module = "org.nanohttpd:nanohttpd-websocket", version.ref = "nanoHttpd" }
 
 
 preference-preference = { module = "androidx.preference:preference", version.ref = "preference" }

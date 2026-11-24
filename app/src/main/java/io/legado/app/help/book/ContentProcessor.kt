@@ -70,13 +70,15 @@ class ContentProcessor private constructor(
     }
 
     fun upReplaceRules() {
+        // 「只对本书生效」的规则按 bookUrl 精确匹配，先取当前书籍的标识
+        val bookUrl = appDb.bookDao.getBookByOrigin(bookName, bookOrigin)?.bookUrl
         titleReplaceRules.run {
             clear()
-            addAll(appDb.replaceRuleDao.findEnabledByTitleScope(bookName, bookOrigin))
+            addAll(appDb.replaceRuleDao.findEnabledByTitleScope(bookName, bookOrigin, bookUrl))
         }
         contentReplaceRules.run {
             clear()
-            addAll(appDb.replaceRuleDao.findEnabledByContentScope(bookName, bookOrigin))
+            addAll(appDb.replaceRuleDao.findEnabledByContentScope(bookName, bookOrigin, bookUrl))
         }
     }
 

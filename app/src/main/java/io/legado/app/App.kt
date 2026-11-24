@@ -19,7 +19,7 @@ import io.legado.app.base.AppContextWrapper
 import io.legado.app.constant.AppLog
 import io.legado.app.constant.AppConst.channelIdDownload
 import io.legado.app.constant.AppConst.channelIdReadAloud
-import io.legado.app.constant.AppConst.channelIdWeb
+import io.legado.app.constant.AppConst.channelIdAutoTask
 import io.legado.app.constant.PreferKey
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
@@ -32,7 +32,6 @@ import io.legado.app.data.entities.rule.ContentRule
 import io.legado.app.data.entities.rule.ExploreRule
 import io.legado.app.data.entities.rule.SearchRule
 import io.legado.app.help.AppFreezeMonitor
-import io.legado.app.help.AppWebDav
 import io.legado.app.help.CrashHandler
 import io.legado.app.help.DefaultData
 import io.legado.app.help.DispatchersMonitor
@@ -138,10 +137,6 @@ class App : Application() {
             SourceHelp.adjustSortNumber()
             AutoTask.all()
             AutoTaskScheduler.refresh(this@App)
-            //同步阅读记录
-            if (AppConfig.syncBookProgress) {
-                AppWebDav.downloadAllBookProgress()
-            }
         }
     }
 
@@ -222,9 +217,10 @@ class App : Application() {
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }
 
-        val webChannel = NotificationChannel(
-            channelIdWeb,
-            getString(R.string.web_service),
+        // 沿用原 web 通道 id，现有安装可平滑继承；显示名改为定时任务
+        val autoTaskChannel = NotificationChannel(
+            channelIdAutoTask,
+            getString(R.string.auto_task_manage),
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
             enableLights(false)
@@ -238,7 +234,7 @@ class App : Application() {
             listOf(
                 downloadChannel,
                 readAloudChannel,
-                webChannel
+                autoTaskChannel
             )
         )
     }

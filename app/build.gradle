@@ -18,26 +18,25 @@ static def releaseTime() {
     return new Date().format("yyMMddHH", TimeZone.getTimeZone("GMT+8"))
 }
 
+/**
+ * versionCode：2020-01-01 00:00 (UTC+8) 起的秒数。
+ * - 每秒唯一：同一小时内多次出包也会得到不同 versionCode，App 才能判断"有新版本"；
+ *   （旧方案 yyMMddHH 在同一小时内恒定，客户端会把新包误判成"已是最新"）
+ * - 随时间单调递增，Int 上限可支撑到 2088 年前后；
+ * - 不使用 git 提交计数：历史重置后 rev-list 基线已不在 HEAD 祖先链。
+ */
+static def versionCodeFromTime() {
+    return (int) ((System.currentTimeMillis() - 1577808000000L).intdiv(1000L))
+}
+
 def name = "legado"
 def version = "3." + releaseTime()
-def versionCodeValue = 30000
-// Preserve the published code at this point, then ignore GitHub wrapper merge commits.
-def versionCodeBaseCommit = '9639f027fbc8cfdf57ce136a9e0c98829a235aef'
-def versionCodeAtBase = 37540
-// 已发布包的最高 versionCode（3.26110411 = 38489）。多分支 / 多 worktree 并行时
-// git 提交数不可比，显式下限防止版本号回退导致无法覆盖安装。每次发版后上调。
-def versionCodeFloor = 38502
-try {
-    def gitCount = providers.exec {
-        commandLine 'git', 'rev-list', "${versionCodeBaseCommit}..HEAD", '--count', '--no-merges'
-        ignoreExitValue = true
-    }.standardOutput.asText.get().trim()
-    if (gitCount) {
-        versionCodeValue = versionCodeAtBase + Integer.parseInt(gitCount)
-    }
-} catch (ignored) {
-    // Keep source archives buildable when Git is unavailable.
-}
+// versionCode：优先取 -PversionCode=xxx 的显式值；否则按上面时间戳生成。
+// floor 取本机已安装/已发布的最高包（3.26112214），低于它会被系统判为降级安装而失败。
+def versionCodeFloor = 26112214
+def versionCodeValue = project.hasProperty("versionCode")
+        ? project.property("versionCode").toString().toInteger()
+        : versionCodeFromTime()
 if (versionCodeValue < versionCodeFloor) {
     versionCodeValue = versionCodeFloor
 }
@@ -199,6 +198,9 @@ android {
     }
     lint {
         checkDependencies = true
+        // 内测包用 -PfastRelease 跳过 lintVital：上次出包实测这段分析 4m51，
+        // 收尾比 R8 还晚 1m47，一直压在关键路径上。正式发版不要加这个参数。
+        checkReleaseBuilds = !project.hasProperty("fastRelease")
     }
     tasks.withType(JavaCompile).tap {
         configureEach {
@@ -322,10 +324,6 @@ dependencies {
     implementation(libs.androidsvg)
     //Glide svg plugin
     implementation(libs.glide.svg)
-
-    //webServer
-    implementation(libs.nanohttpd.nanohttpd)
-    implementation(libs.nanohttpd.websocket)
 
     //二维码
     //noinspection GradleDependency

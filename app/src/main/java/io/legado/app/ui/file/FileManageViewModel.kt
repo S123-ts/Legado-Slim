@@ -8,7 +8,11 @@ import java.io.File
 
 class FileManageViewModel(application: Application) : BaseViewModel(application) {
 
-    val rootDoc = context.getExternalFilesDir(null)?.parentFile
+    /**
+     * 起始目录，默认是应用外部私有目录（Android/data/包名）；
+     * 可由 [FileManageActivity] 通过 intent 指定，设置里的「文件管理」定位到日志目录
+     */
+    var rootDoc: File? = context.getExternalFilesDir(null)?.parentFile
     var subDocs = mutableListOf<File>()
     val filesLiveData = MutableLiveData<List<File>>()
 

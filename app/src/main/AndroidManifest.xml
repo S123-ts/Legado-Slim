@@ -529,21 +529,6 @@
             android:name=".service.ExportBookService"
             android:foregroundServiceType="dataSync" />
         <service
-            android:name=".service.WebService"
-            android:foregroundServiceType="dataSync" />
-        <service
-            android:name=".service.WebTileService"
-            android:exported="true"
-            android:foregroundServiceType="dataSync"
-            android:icon="@drawable/ic_web_service_noti"
-            android:label="legado Web Service"
-            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
-            tools:targetApi="24">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE" />
-            </intent-filter>
-        </service>
-        <service
             android:name=".service.TTSReadAloudService"
             android:foregroundServiceType="mediaPlayback" />
         <service
@@ -571,12 +556,12 @@
             </intent-filter>
         </receiver>
 
+        <!-- 仅本应用内部使用，不向第三方应用导出（Slim 无跨 App 共享需求） -->
         <provider
             android:name=".api.ReaderProvider"
             android:authorities="${applicationId}.readerProvider"
             android:enabled="true"
-            android:exported="true"
-            tools:ignore="ExportedContentProvider" />
+            android:exported="false" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileProvider"

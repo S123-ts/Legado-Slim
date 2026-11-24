@@ -30,6 +30,7 @@ import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import splitties.views.onClick
@@ -51,6 +52,7 @@ class SearchLogDialog : BaseDialogFragment(R.layout.dialog_recycler_view),
     private val binding by viewBinding(DialogRecyclerViewBinding::bind)
     private val adapter by lazy { LogAdapter(requireContext()) }
     private var records: List<SearchLogRecord> = emptyList()
+    private var loadJob: Job? = null
 
     override fun onStart() {
         super.onStart()
@@ -75,7 +77,9 @@ class SearchLogDialog : BaseDialogFragment(R.layout.dialog_recycler_view),
     }
 
     private fun loadRecords() {
-        viewLifecycleOwner.lifecycleScope.launch {
+        // 清空前如果还有未读完的记录，取消掉，避免清空后又被旧数据填回列表
+        loadJob?.cancel()
+        loadJob = viewLifecycleOwner.lifecycleScope.launch {
             val data = withContext(Dispatchers.IO) { SearchLogStorage.loadRecent(MAX_SHOW) }
             records = data
             adapter.setItems(data)
@@ -89,6 +93,7 @@ class SearchLogDialog : BaseDialogFragment(R.layout.dialog_recycler_view),
         when (item?.itemId) {
             R.id.menu_clear -> alert(R.string.clear, R.string.clear_log_confirm) {
                 yesButton {
+                    loadJob?.cancel()
                     SearchLogStore.clear()
                     records = emptyList()
                     adapter.clearItems()

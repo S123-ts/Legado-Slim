@@ -124,14 +124,15 @@ class AboutFragment : PreferenceFragmentCompat() {
     private fun startUploadLog(rawUrl: String?) {
         val url = LogUpload.normalizeUrl(rawUrl)
         if (url == null) {
-            appCtx.toastOnUi("上传地址不对：${rawUrl ?: ""}")
+            appCtx.toastOnUi("上传地址不对（仅支持内网/本机地址）：${rawUrl ?: ""}")
             return
         }
-        AppConfig.logUploadUrl = url
-        appCtx.toastOnUi("正在打包日志")
+        appCtx.toastOnUi("正在打包日志（含 logcat 与设备信息，仅可传内网可信电脑）")
         Coroutine.async {
             LogUpload.uploadBundle(url)
         }.onSuccess { result ->
+            // 上传成功后才记住地址，避免把错字/失效地址持久化
+            AppConfig.logUploadUrl = url
             if (!isAdded) return@onSuccess
             alert(R.string.upload_log) {
                 setMessage(result)

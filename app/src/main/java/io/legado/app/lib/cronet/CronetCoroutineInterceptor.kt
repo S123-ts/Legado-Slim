@@ -84,7 +84,8 @@ class CronetCoroutineInterceptor(private val cookieJar: CookieJar) : Interceptor
 
             val callBack = object : AbsCallBack(request, call, readTimeoutMillis) {
                 override fun waitForDone(urlRequest: UrlRequest): Response {
-                    TODO("Not yet implemented")
+                    // 协程路径不阻塞等待，这个重载不会被 CronetInterceptor 调用
+                    throw UnsupportedOperationException("coroutine interceptor does not support blocking wait")
                 }
 
                 override fun onError(error: IOException) {

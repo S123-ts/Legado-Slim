@@ -33,6 +33,7 @@ import io.legado.app.databinding.DialogEditTextBinding
 import io.legado.app.help.DirectLinkUpload
 import io.legado.app.help.SourceSharePassphrase
 import io.legado.app.help.config.LocalConfig
+import io.legado.app.help.source.BuiltinSourceRegistry
 import io.legado.app.help.config.AppConfig
 import io.legado.app.lib.dialogs.alert
 import io.legado.app.lib.dialogs.sourceSharePassphraseButton
@@ -316,6 +317,14 @@ class BookSourceActivity : VMBaseActivity<ActivityBookSourceBinding, BookSourceV
                 searchView.setQuery(getString(R.string.disabled_explore), true)
             }
 
+            R.id.menu_filter_builtin_source -> {
+                searchView.setQuery(BuiltinSourceRegistry.BUILTIN_QUERY_PREFIX, true)
+            }
+
+            R.id.menu_filter_imported_source -> {
+                searchView.setQuery(BuiltinSourceRegistry.IMPORTED_QUERY_PREFIX, true)
+            }
+
             R.id.menu_group_sources_by_domain -> {
                 item.isChecked = !item.isChecked
                 groupSourcesByDomain = item.isChecked
@@ -406,6 +415,18 @@ class BookSourceActivity : VMBaseActivity<ActivityBookSourceBinding, BookSourceV
                 searchKey.startsWith("group:") -> {
                     val key = searchKey.substringAfter("group:")
                     appDb.bookSourceDao.flowGroupSearch(key)
+                }
+
+                searchKey.startsWith(BuiltinSourceRegistry.BUILTIN_QUERY_PREFIX) -> {
+                    appDb.bookSourceDao.flowAll().map { list ->
+                        list.filter { BuiltinSourceRegistry.isBuiltin(it.bookSourceUrl) }
+                    }
+                }
+
+                searchKey.startsWith(BuiltinSourceRegistry.IMPORTED_QUERY_PREFIX) -> {
+                    appDb.bookSourceDao.flowAll().map { list ->
+                        list.filter { !BuiltinSourceRegistry.isBuiltin(it.bookSourceUrl) }
+                    }
                 }
 
                 else -> {
@@ -522,8 +543,17 @@ class BookSourceActivity : VMBaseActivity<ActivityBookSourceBinding, BookSourceV
     }
 
     override fun onClickSelectBarMainAction() {
-        alert(titleResource = R.string.draw, messageResource = R.string.sure_del) {
-            yesButton { viewModel.del(adapter.selection) }
+        val selected = adapter.selection
+        val builtinCount = selected.count { BuiltinSourceRegistry.isBuiltin(it.bookSourceUrl) }
+        val message = if (builtinCount > 0) {
+            getString(R.string.sure_del) + "\n" +
+                getString(R.string.builtin_delete_tip, builtinCount)
+        } else {
+            getString(R.string.sure_del)
+        }
+        alert(R.string.draw) {
+            setMessage(message)
+            yesButton { viewModel.del(selected) }
             noButton()
         }
     }
@@ -811,7 +841,12 @@ class BookSourceActivity : VMBaseActivity<ActivityBookSourceBinding, BookSourceV
 
     override fun del(bookSource: BookSourcePart) {
         alert(R.string.draw) {
-            setMessage(getString(R.string.sure_del) + "\n" + bookSource.bookSourceName)
+            val builtinTip = if (BuiltinSourceRegistry.isBuiltin(bookSource.bookSourceUrl)) {
+                "\n" + getString(R.string.builtin_delete_tip, 1)
+            } else {
+                ""
+            }
+            setMessage(getString(R.string.sure_del) + "\n" + bookSource.bookSourceName + builtinTip)
             noButton()
             yesButton {
                 viewModel.del(listOf(bookSource))

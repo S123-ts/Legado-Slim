@@ -118,7 +118,8 @@ class EffectiveReplacesDialog() : BaseDialogFragment(R.layout.dialog_recycler_vi
                         ReplaceEditActivity.startIntent(
                             requireContext(),
                             item.id,
-                            bookName = ReadBook.book?.name
+                            bookName = ReadBook.book?.name,
+                            bookUrl = ReadBook.book?.bookUrl
                         )
                     )
                 }

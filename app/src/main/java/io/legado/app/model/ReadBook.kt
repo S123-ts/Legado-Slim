@@ -2126,12 +2126,13 @@ object ReadBook : CoroutineScope by MainScope() {
 
     /**
      * 取消注册回调
+     * @return 是否解除了当前注册（不是当前回调时不做释放，避免旧页面销毁打断新书的加载）
      */
-    fun unregister(cb: CallBack) {
-        if (callBack === cb) {
-            callBack = null
-        }
+    fun unregister(cb: CallBack): Boolean {
+        if (callBack !== cb) return false
+        callBack = null
         releaseAndCancel()
+        return true
     }
 
     private fun releaseAndCancel() {

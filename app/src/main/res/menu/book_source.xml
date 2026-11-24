@@ -100,6 +100,14 @@
                 android:id="@+id/menu_disabled_explore_group"
                 android:title="@string/disabled_explore" />
 
+            <item
+                android:id="@+id/menu_filter_builtin_source"
+                android:title="@string/filter_builtin_source" />
+
+            <item
+                android:id="@+id/menu_filter_imported_source"
+                android:title="@string/filter_imported_source" />
+
             <group android:id="@+id/source_group">
 
             </group>

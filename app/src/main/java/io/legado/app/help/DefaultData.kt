@@ -11,6 +11,8 @@ import io.legado.app.help.config.LocalConfig
 import io.legado.app.help.config.ReadBookConfig
 import io.legado.app.help.config.ThemeConfig
 import io.legado.app.help.coroutine.Coroutine
+import io.legado.app.help.source.BuiltinSourceRegistry
+import io.legado.app.help.source.BuiltinSourceSync
 import io.legado.app.help.source.SourceHelp
 import io.legado.app.help.source.clearSharedGlobalState
 import io.legado.app.model.BookCover
@@ -162,7 +164,52 @@ object DefaultData {
         // 夜天系（2→1，同一批 30 本书）
         "http://www.rulianshi.cc",
         // 2026-11-15 第六批：与「恩施轻语(代)」同站（规则里写死 esjzone.one），按用户要求删除
-        "https://www.esjzone.cc"
+        "https://www.esjzone.cc",
+        // 2026-11-23 按用户要求内置清单只保留 https://sudugu520.com，
+        // 其余 43 条旧内置源全部下架，老设备升级时由 importDefaultBookSources 清除
+        "https://www.deqixss.com",
+        "https://www.chamabooks.net",
+        "https://www.suduguu.com",
+        "http://www.xyetianlian.com",
+        "http://www.92xs.info",
+        "https://www.20xs.org",
+        "http://www.changduge.com",
+        "http://www.81shuku.info",
+        "https://www.sjks88.com",
+        "http://m.xxxbiquge.net",
+        "https://ixdzs.tw/",
+        "https://www.esjzone.one",
+        "https://www.shuzhaige.com",
+        "http://www.booksky.cc",
+        "http://www.wensang.net",
+        "http://www.yuedsk.com",
+        "http://wap.ujxsw.org/##@鱼",
+        "http://www.4020xs.com",
+        "https://m.jhsssd.com",
+        "https://www.kadokado.cn",
+        "https://tybook.taoyuewenhua.net",
+        "https://www.dbxsd.com",
+        "https://www.tycqzw.la/",
+        "http://www.biquw.info/",
+        "https://www.douyinxs.com/",
+        "http://www.77shuku.net/",
+        "https://www.wxscs.com#",
+        "http://m.2kk.la#🎃",
+        "http://m.5859ycdh.com",
+        "https://www.biquge5200.cc",
+        "https://www.pinshuzhai.com ",
+        "https://www.dcrbk.com#🎃",
+        "https://m.qbiqus.com#🎃",
+        "https://www.ybswa.com",
+        "http://m.xinbqg.com",
+        "https://www.biquluo.la",
+        "http://www.bookwenxue.com",
+        "http://www.xuankuge.com/",
+        "http://www.biqugere.net",
+        "https://www.biqusan.com/",
+        "https://www.ibiquge.la",
+        "https://www.wanwx.com",
+        "https://www.kushuge.com",
     )
 
     // 旧内置朗读引擎里 id 为正数的遗留项，deleteDefault() 的 id < 0 条件覆盖不到
@@ -178,8 +225,22 @@ object DefaultData {
         }
 
     fun importDefaultBookSources() {
+        // 内置包带 builtinId 时走编号同步：按编号更新/新增/下架，完全用内置版覆盖，
+        // 用户自己导入的源（无编号、不在基线里）不碰。
+        // 老包没有编号时 entries 为空，回退到下面按 URL 的旧逻辑。
+        val rawJson = String(
+            appCtx.assets.open("defaultData${File.separator}bookSources.json").readBytes()
+        )
+        val entries = BuiltinSourceSync.parse(rawJson)
+        if (entries.isNotEmpty()) {
+            BuiltinSourceSync.sync(entries)
+            return
+        }
+
         val existing = appDb.bookSourceDao.all
         val existingUrls = existing.map { it.bookSourceUrl }.toSet()
+        // 用户在书源管理里删掉的内置源，升级时不再自动导回
+        val userRemoved = BuiltinSourceRegistry.removedUrls
         // 增量导入不会删旧源，需显式剔除上一批内置里已下架的
         // 走 SourceHelp 而不是 DAO：裸删只清 book_sources，会残留 sourceVariables 与 SourceConfig
         (existingUrls intersect removedDefaultBookSourceUrls).forEach {
@@ -189,6 +250,7 @@ object DefaultData {
         // 内置源改名后同步到已有书源，只改名字不动 URL
         val lastNames = lastDefaultBookSourceNames
         existing.forEach { source ->
+            if (source.bookSourceUrl in userRemoved) return@forEach
             val defaultName = defaultByUrl[source.bookSourceUrl]?.bookSourceName
             if (defaultName != null && defaultName != source.bookSourceName) {
                 // 只在现名仍是内置下发过的名字时覆盖，用户自改的名字保留。
@@ -205,7 +267,9 @@ object DefaultData {
         }
         lastDefaultBookSourceNames =
             bookSources.associate { it.bookSourceUrl to it.bookSourceName }
-        val toInsert = bookSources.filter { it.bookSourceUrl !in existingUrls }
+        val toInsert = bookSources.filter {
+            it.bookSourceUrl !in existingUrls && it.bookSourceUrl !in userRemoved
+        }
         if (toInsert.isNotEmpty()) {
             appDb.bookSourceDao.insert(*toInsert.toTypedArray())
         }

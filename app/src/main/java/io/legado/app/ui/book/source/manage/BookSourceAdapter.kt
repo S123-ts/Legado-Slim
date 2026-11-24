@@ -15,6 +15,7 @@ import io.legado.app.base.adapter.RecyclerAdapter
 import io.legado.app.data.entities.BookSourcePart
 import io.legado.app.data.entities.BookSourceCheckState
 import io.legado.app.databinding.ItemBookSourceBinding
+import io.legado.app.help.source.BuiltinSourceRegistry
 import io.legado.app.lib.theme.backgroundColor
 import io.legado.app.model.Debug
 import io.legado.app.ui.login.SourceLoginActivity
@@ -126,6 +127,13 @@ class BookSourceAdapter(
                 upBookshelfCount(binding, item)
                 upCheckSourceMessage(binding, item)
                 upShowExplore(ivExplore, item)
+                tvSourceOriginBadge.text = context.getString(
+                    if (BuiltinSourceRegistry.isBuiltin(item.bookSourceUrl)) {
+                        R.string.builtin_source
+                    } else {
+                        R.string.imported_source
+                    }
+                )
                 tvJsBadge.gone(!item.hasJs)
                 upSourceHost(binding, holder.layoutPosition)
             } else {

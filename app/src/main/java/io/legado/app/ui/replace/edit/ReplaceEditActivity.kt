@@ -54,7 +54,8 @@ class ReplaceEditActivity :
             pattern: String? = null,
             isRegex: Boolean = false,
             scope: String? = null,
-            bookName: String? = null
+            bookName: String? = null,
+            bookUrl: String? = null
         ): Intent {
             val intent = Intent(context, ReplaceEditActivity::class.java)
             intent.putExtra("id", id)
@@ -62,6 +63,7 @@ class ReplaceEditActivity :
             intent.putExtra("isRegex", isRegex)
             intent.putExtra("scope", scope)
             intent.putExtra("bookName", bookName)
+            intent.putExtra("bookUrl", bookUrl)
             return intent
         }
 
@@ -85,6 +87,11 @@ class ReplaceEditActivity :
     /** 从阅读界面进来时带上的当前书名：新建规则默认只对本书生效，勾选「对所有书生效」才全局 */
     private val bookName: String? by lazy {
         intent.getStringExtra("bookName")?.takeIf { it.isNotBlank() }
+    }
+
+    /** 当前书籍的身份标识：「只对本书生效」时按它精确匹配，不再靠书名子串 */
+    private val bookUrl: String? by lazy {
+        intent.getStringExtra("bookUrl")?.takeIf { it.isNotBlank() }
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -249,8 +256,9 @@ class ReplaceEditActivity :
             cbScopeContent.isChecked = replaceRule.scopeContent
             renderField(etScope, R.id.et_scope, replaceRule.scope.orEmpty())
             if (bookName != null) {
-                // 没有作用范围即「对所有书生效」
+                // 没有作用范围也没有书籍身份即「对所有书生效」
                 cbScopeAllBooks.isChecked = replaceRule.scope.isNullOrBlank()
+                        && replaceRule.bookUrl.isNullOrBlank()
                 etScope.isEnabled = !cbScopeAllBooks.isChecked
             }
             renderField(etExcludeScope, R.id.et_exclude_scope, replaceRule.excludeScope.orEmpty())
@@ -316,6 +324,7 @@ class ReplaceEditActivity :
             scopeSource = cbScopeSource.isChecked,
             scopeContent = cbScopeContent.isChecked,
             scope = currentScope(),
+            bookUrl = currentBookUrl(),
             excludeScope = (rawFields[R.id.et_exclude_scope] ?: etExcludeScope.text.toString()).ifBlank { null },
             timeoutMillisecond = etTimeout.text.toString().toLongOrNull() ?: 3000L,
         )
@@ -334,6 +343,30 @@ class ReplaceEditActivity :
         val typed = (rawFields[R.id.et_scope] ?: binding.etScope.text.toString()).trim()
         if (typed.isNotEmpty()) return typed
         return bookName
+    }
+
+    /**
+     * 书籍身份：
+     * 勾选「对所有书生效」→ null（全局）；
+     * 作用范围仍是当前书名 → 当前 bookUrl（只对本书，精确匹配）；
+     * 作用范围没改动 → 保留原规则身份（从别的书的阅读页打开也不丢）；
+     * 其余（作用范围改成了别的文本）→ null，退回按文本范围匹配。
+     */
+    private fun currentBookUrl(): String? {
+        val globalChecked = binding.cbScopeAllBooks.visibility == View.VISIBLE
+                && binding.cbScopeAllBooks.isChecked
+        if (globalChecked) return null
+        val typed = (rawFields[R.id.et_scope] ?: binding.etScope.text.toString()).trim()
+        val editingBookUrl = bookUrl
+        if (editingBookUrl != null && (typed.isEmpty() || typed == bookName)) {
+            return editingBookUrl
+        }
+        val source = viewModel.replaceRule
+        val sourceBookUrl = source?.bookUrl
+        if (sourceBookUrl != null && typed == source.scope.orEmpty().trim()) {
+            return sourceBookUrl
+        }
+        return null
     }
 
     private fun renderField(view: EditText, fieldId: Int, raw: String) {
@@ -369,8 +402,9 @@ class ReplaceEditActivity :
 
     private fun sameRule(a: ReplaceRule, b: ReplaceRule): Boolean =
         a.name == b.name && a.group == b.group && a.pattern == b.pattern && a.replacement == b.replacement &&
-            a.scope == b.scope && a.scopeTitle == b.scopeTitle && a.scopeSource == b.scopeSource &&
-            a.scopeContent == b.scopeContent && a.excludeScope == b.excludeScope && a.isEnabled == b.isEnabled &&
+            a.scope == b.scope && a.bookUrl == b.bookUrl && a.scopeTitle == b.scopeTitle &&
+            a.scopeSource == b.scopeSource && a.scopeContent == b.scopeContent &&
+            a.excludeScope == b.excludeScope && a.isEnabled == b.isEnabled &&
             a.isRegex == b.isRegex && a.timeoutMillisecond == b.timeoutMillisecond && a.order == b.order
 
     private fun getReplaceRuleForExport(): ReplaceRule {

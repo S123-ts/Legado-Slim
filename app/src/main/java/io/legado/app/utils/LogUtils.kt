@@ -12,6 +12,7 @@ import io.legado.app.constant.AppLog
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.globalExecutor
 import splitties.init.appCtx
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.logging.FileHandler
@@ -54,6 +55,11 @@ object LogUtils {
 
     private var fileHandler: FileHandler? = null
 
+    /**
+     * 当前正在写的日志文件，关闭句柄时要连同它一起清掉引用
+     */
+    private var logFile: File? = null
+
     private fun createFileHandler(context: Context): FileHandler? {
         try {
             val root = context.externalCacheDir ?: return null
@@ -68,6 +74,7 @@ object LogUtils {
             }
             val date = getCurrentDateStr(TIME_PATTERN).replace(" ", "_").replace(":", "-")
             val logPath = FileUtils.getPath(root = logFolder, "appLog-$date.txt")
+            logFile = File(logPath)
             return AsyncFileHandler(logPath).apply {
                 formatter = object : java.util.logging.Formatter() {
                     override fun format(record: LogRecord): String {
@@ -95,6 +102,30 @@ object LogUtils {
             Level.OFF
         }
         fileHandler?.level = level
+    }
+
+    /**
+     * 关掉当前日志文件句柄。
+     * FileHandler 从应用启动起就一直持有这个文件的写入流，直接删文件的话
+     * 后续日志会写进已被删除的 inode：目录里看不到新日志，空间也要等进程退出才释放。
+     */
+    fun closeFileHandler() {
+        fileHandler?.let {
+            kotlin.runCatching { logger.removeHandler(it) }
+            kotlin.runCatching { it.close() }
+                .onFailure { e -> e.printStackTrace() }
+        }
+        fileHandler = null
+        logFile = null
+    }
+
+    /**
+     * 重新打开日志文件：先关旧句柄，再按当前时间新建。
+     * 删除日志后调用，保证清理完日志还能继续落盘。
+     */
+    fun reopen(context: Context) {
+        closeFileHandler()
+        init(context)
     }
 
     /**

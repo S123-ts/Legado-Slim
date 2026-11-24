@@ -75,11 +75,17 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
 
     companion object {
         private const val EXTRA_BOOK_NAME = "bookName"
+        private const val EXTRA_BOOK_URL = "bookUrl"
 
-        /** 从阅读界面打开时带上当前书名：新建规则默认只对本书生效 */
-        fun startIntent(context: Context, bookName: String? = null): Intent {
+        /** 从阅读界面打开时带上当前书籍：新建规则默认只对本书生效 */
+        fun startIntent(
+            context: Context,
+            bookName: String? = null,
+            bookUrl: String? = null
+        ): Intent {
             return Intent(context, ReplaceRuleActivity::class.java).apply {
                 putExtra(EXTRA_BOOK_NAME, bookName)
+                putExtra(EXTRA_BOOK_URL, bookUrl)
             }
         }
     }
@@ -98,6 +104,9 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
 
     /** 从阅读界面打开时带上的当前书名，null 表示从「我的」进入的全局管理 */
     private var bookName: String? = null
+
+    /** 从阅读界面打开时带上的当前书籍标识，用于「只对本书生效」精确匹配 */
+    private var bookUrl: String? = null
     private val qrCodeResult = registerForActivityResult(QrCodeResult()) {
         it ?: return@registerForActivityResult
         showDialogFragment(ImportReplaceRuleDialog(it))
@@ -139,6 +148,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         bookName = intent.getStringExtra(EXTRA_BOOK_NAME)?.takeIf { it.isNotBlank() }
+        bookUrl = intent.getStringExtra(EXTRA_BOOK_URL)?.takeIf { it.isNotBlank() }
         initRecyclerView()
         initSearchView()
         initSelectActionView()
@@ -276,7 +286,8 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
                     ReplaceEditActivity.startIntent(
                         this,
                         scope = bookName,
-                        bookName = bookName
+                        bookName = bookName,
+                        bookUrl = bookUrl
                     )
                 )
 
@@ -468,7 +479,14 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
 
     override fun edit(rule: ReplaceRule) {
         setResult(RESULT_OK)
-        editActivity.launch(ReplaceEditActivity.startIntent(this, rule.id, bookName = bookName))
+        editActivity.launch(
+            ReplaceEditActivity.startIntent(
+                this,
+                rule.id,
+                bookName = bookName,
+                bookUrl = bookUrl
+            )
+        )
     }
 
     override fun toTop(rule: ReplaceRule) {

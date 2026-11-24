@@ -31,6 +31,11 @@ import java.io.File
 
 class FileManageActivity : VMBaseActivity<ActivityFileManageBinding, FileManageViewModel>() {
 
+    companion object {
+        /** 指定文件管理的起始目录，缺省为应用外部私有目录 */
+        const val EXTRA_START_DIR = "startDir"
+    }
+
     override val binding by viewBinding(ActivityFileManageBinding::inflate)
     override val viewModel by viewModels<FileManageViewModel>()
     private val dirParent = ".."
@@ -48,6 +53,11 @@ class FileManageActivity : VMBaseActivity<ActivityFileManageBinding, FileManageV
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         initView()
         initSearchView()
+        intent.getStringExtra(EXTRA_START_DIR)?.let { path ->
+            File(path).takeIf { it.isDirectory }?.let {
+                viewModel.rootDoc = it
+            }
+        }
         viewModel.upFiles(viewModel.rootDoc)
     }
 

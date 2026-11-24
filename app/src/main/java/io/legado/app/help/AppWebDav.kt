@@ -4,7 +4,6 @@ import android.net.Uri
 import io.legado.app.R
 import io.legado.app.constant.AppLog
 import io.legado.app.constant.PreferKey
-import io.legado.app.data.appDb
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookProgress
 import io.legado.app.exception.NoStackTraceException
@@ -304,37 +303,6 @@ object AppWebDav {
             AppLog.put("获取书籍进度失败\n${it.localizedMessage}", it)
         }
         return null
-    }
-
-    suspend fun downloadAllBookProgress() {
-        val authorization = authorization ?: return
-        if (!NetworkUtils.isAvailable()) return
-        val bookProgressFiles = WebDav(bookProgressUrl, authorization).listFiles()
-        val map = hashMapOf<String, WebDavFile>()
-        bookProgressFiles.forEach {
-            map[it.displayName] = it
-        }
-        appDb.bookDao.all.forEach { book ->
-            val progressFileName = getProgressFileName(book.name, book.author)
-            val webDavFile = map[progressFileName] ?: return@forEach
-            if (webDavFile.lastModify <= book.syncTime) {
-                //本地同步时间大于上传时间不用同步
-                return@forEach
-            }
-            getBookProgress(book)?.let { bookProgress ->
-                if (bookProgress.durChapterIndex > book.durChapterIndex
-                    || (bookProgress.durChapterIndex == book.durChapterIndex
-                            && bookProgress.durChapterPos > book.durChapterPos)
-                ) {
-                    book.durChapterIndex = bookProgress.durChapterIndex
-                    book.durChapterPos = bookProgress.durChapterPos
-                    book.durChapterTitle = bookProgress.durChapterTitle
-                    book.durChapterTime = bookProgress.durChapterTime
-                    book.syncTime = System.currentTimeMillis()
-                    book.update()
-                }
-            }
-        }
     }
 
 }

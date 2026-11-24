@@ -269,8 +269,8 @@ object AutoTaskProtocol {
             integer(action, "id"),
             "${taskName.orEmpty()}|$title|$content"
         )
-        val notification = NotificationCompat.Builder(context, AppConst.channelIdWeb)
-            .setSmallIcon(R.drawable.ic_web_service_noti)
+        val notification = NotificationCompat.Builder(context, AppConst.channelIdAutoTask)
+            .setSmallIcon(R.drawable.ic_auto_task_noti)
             .setContentTitle(title)
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
@@ -316,8 +316,8 @@ object AutoTaskProtocol {
                 time
             )
         )
-        val notification = NotificationCompat.Builder(context, AppConst.channelIdWeb)
-            .setSmallIcon(R.drawable.ic_web_service_noti)
+        val notification = NotificationCompat.Builder(context, AppConst.channelIdAutoTask)
+            .setSmallIcon(R.drawable.ic_auto_task_noti)
             .setContentTitle(title)
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))

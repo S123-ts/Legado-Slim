@@ -8,6 +8,7 @@ import io.legado.app.constant.EventBus
 import io.legado.app.data.appDb
 import io.legado.app.help.LifecycleHelp
 import io.legado.app.help.config.AppConfig
+import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.model.AudioPlay
 import io.legado.app.model.ReadAloud
 import io.legado.app.model.ReadBook
@@ -18,6 +19,7 @@ import io.legado.app.ui.book.read.ReadBookActivity
 import io.legado.app.utils.LogUtils
 import io.legado.app.utils.getPrefBoolean
 import io.legado.app.utils.postEvent
+import io.legado.app.utils.runOnUI
 
 
 /**
@@ -113,11 +115,13 @@ class MediaButtonReceiver : BroadcastReceiver() {
                     if (ReadBook.book != null) {
                         ReadBook.readAloud()
                     } else {
-                        appDb.bookDao.lastReadBook?.let {
-                            ReadBook.resetData(it)
-                            ReadBook.clearTextChapter()
-                            ReadBook.loadContent(false) {
-                                ReadBook.readAloud()
+                        // 媒体键回调在 main 线程，取书与初始化放到 IO，避免主线程查库
+                        Coroutine.async {
+                            appDb.bookDao.lastReadBook?.let { book ->
+                                ReadBook.resetData(book)
+                                ReadBook.clearTextChapter()
+                                // 加载回调在 IO，朗读启动回主线程，保持与 Service/Activity 调用一致
+                                ReadBook.loadContent(false) { runOnUI { ReadBook.readAloud() } }
                             }
                         }
                     }

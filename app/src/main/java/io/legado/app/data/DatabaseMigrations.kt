@@ -25,7 +25,41 @@ object DatabaseMigrations {
             migration_39_40, migration_40_41, migration_41_42, migration_42_43,
             migration_100_101, migration_104_105, migration_105_106, migration_106_107,
             migration_107_108, migration_108_109, migration_109_110,
+            migration_111_112, migration_112_113,
         )
+    }
+
+    /**
+     * 112→113：把「最后一版」（其 112 已含 bookUrl、且仍保留 dictRules）与本机 112
+     * （已删 dictRules、无 bookUrl）两条升级路径都收敛到同一套 113 结构：
+     * 有 bookUrl 就跳过，没有就补上；dictRules 一律丢弃。
+     */
+    private val migration_112_113 = object : Migration(112, 113) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            val hasBookUrl = db.query("PRAGMA table_info(`replace_rules`)").use { cursor ->
+                var found = false
+                while (cursor.moveToNext()) {
+                    if (cursor.getString(cursor.getColumnIndexOrThrow("name")) == "bookUrl") {
+                        found = true
+                        break
+                    }
+                }
+                found
+            }
+            if (!hasBookUrl) {
+                db.execSQL("ALTER TABLE `replace_rules` ADD COLUMN `bookUrl` TEXT")
+            }
+            db.execSQL("DROP TABLE IF EXISTS `dictRules`")
+        }
+    }
+
+    /**
+     * 词典规则随 Web 服务一并不再使用，直接丢弃旧表；备份恢复也不再读写 dictRule.json
+     */
+    private val migration_111_112 = object : Migration(111, 112) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("DROP TABLE IF EXISTS `dictRules`")
+        }
     }
 
     private val migration_109_110 = object : Migration(109, 110) {

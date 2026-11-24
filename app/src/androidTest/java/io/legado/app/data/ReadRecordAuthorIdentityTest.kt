@@ -1,5 +1,6 @@
 package io.legado.app.data
 
+import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.testing.MigrationTestHelper
@@ -86,7 +87,10 @@ class ReadRecordAuthorIdentityTest {
                 .build()
             try {
                 val dao = database.readRecordDao
-                assertEquals(111, database.openHelper.writableDatabase.version)
+                assertEquals(
+                    AppDatabase::class.java.getAnnotation(Database::class.java).version,
+                    database.openHelper.writableDatabase.version
+                )
                 assertEquals(legacy.toSet(), dao.all.toSet())
                 assertEquals(1350L, dao.allTime)
                 assertNull(dao.getRecord("phone", "Same", "Author A"))
@@ -164,7 +168,10 @@ class ReadRecordAuthorIdentityTest {
                 }, Executor { it.run() }).build()
             try {
                 val sqlite = database.openHelper.writableDatabase
-                assertEquals(111, sqlite.version)
+                assertEquals(
+                    AppDatabase::class.java.getAnnotation(Database::class.java).version,
+                    sqlite.version
+                )
                 assertEquals(records.toSet(), database.readRecordDao.all.toSet())
                 for (search in listOf(false, true)) {
                     val start = android.os.SystemClock.elapsedRealtime()

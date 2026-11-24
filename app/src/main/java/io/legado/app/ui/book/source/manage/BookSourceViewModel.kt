@@ -7,6 +7,7 @@ import io.legado.app.data.appDb
 import io.legado.app.data.entities.BookSource
 import io.legado.app.data.entities.BookSourcePart
 import io.legado.app.data.entities.toBookSource
+import io.legado.app.help.source.BuiltinSourceRegistry
 import io.legado.app.help.source.SourceHelp
 import io.legado.app.utils.FileUtils
 import io.legado.app.utils.GSON
@@ -53,6 +54,8 @@ class BookSourceViewModel(application: Application) : BaseViewModel(application)
 
     fun del(sources: List<BookSourcePart>) {
         execute {
+            // 内置源删掉后记入黑名单，升级/内置包编号同步时不再自动导回
+            BuiltinSourceRegistry.markRemoved(sources.map { it.bookSourceUrl })
             SourceHelp.deleteBookSourceParts(sources)
         }
     }
@@ -225,6 +228,18 @@ class BookSourceViewModel(application: Application) : BaseViewModel(application)
             searchKey.startsWith("group:") -> {
                 val key = searchKey.substringAfter("group:")
                 appDb.bookSourceDao.groupSearch(key)
+            }
+
+            searchKey.startsWith(BuiltinSourceRegistry.BUILTIN_QUERY_PREFIX) -> {
+                appDb.bookSourceDao.all.filter {
+                    BuiltinSourceRegistry.isBuiltin(it.bookSourceUrl)
+                }
+            }
+
+            searchKey.startsWith(BuiltinSourceRegistry.IMPORTED_QUERY_PREFIX) -> {
+                appDb.bookSourceDao.all.filter {
+                    !BuiltinSourceRegistry.isBuiltin(it.bookSourceUrl)
+                }
             }
 
             else -> {

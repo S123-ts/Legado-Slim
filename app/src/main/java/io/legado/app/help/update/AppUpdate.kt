@@ -9,10 +9,12 @@ import io.legado.app.help.http.okHttpClient
 import io.legado.app.utils.GSON
 import kotlinx.coroutines.CoroutineScope
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.OkHttpClient
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.util.concurrent.TimeUnit
 
 /**
  * 应用更新，两条通道共用一个清单格式：
@@ -39,6 +41,18 @@ object AppUpdate {
     private const val GITHUB_HOST = "github.com"
 
     private val repoPattern = Regex("""^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$""")
+
+    /**
+     * 检查更新专用的客户端：内网服务没开时不该让用户对着「检查中」干等。
+     * 全局 okHttpClient 是 15s 连接 + 60s 读/整体超时，这里收紧到 6/10/15 秒。
+     */
+    private val updateClient: OkHttpClient by lazy {
+        okHttpClient.newBuilder()
+            .connectTimeout(6, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
+            .callTimeout(15, TimeUnit.SECONDS)
+            .build()
+    }
 
     /**
      * update.json 的内容
@@ -135,7 +149,7 @@ object AppUpdate {
             ?: throw NoStackTraceException("更新地址无效")
         return Coroutine.async(scope) {
             val response = try {
-                okHttpClient.newCallResponse {
+                updateClient.newCallResponse {
                     url(manifestUrl(base))
                     header("Cache-Control", "no-cache")
                 }

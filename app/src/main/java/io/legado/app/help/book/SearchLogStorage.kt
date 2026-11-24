@@ -8,6 +8,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 /**
  * 搜索日志落盘。
@@ -17,7 +19,8 @@ import java.util.concurrent.Executors
  * 内容：关键词、类型（搜索/换源）、页码、总耗时，以及每个书源返回的条数、耗时、错误和书名列表
  * 清理：保留最近 [KEEP_DAYS] 天，写入时顺带删过期文件
  *
- * 写入走单线程队列，不占搜索线程，也不阻塞主线程。
+ * 写入与清空都走同一个单线程队列，不占搜索线程，也不阻塞主线程；
+ * 读盘前会先等排队中的清空落地，避免读回已清记录。
  */
 object SearchLogStorage {
 
@@ -32,6 +35,10 @@ object SearchLogStorage {
     }
 
     private var lastCleanDay = ""
+
+    /** 最近一次「清空」任务：读盘前先等它完成，避免把已清记录读回来 */
+    @Volatile
+    private var pendingClear: Future<*>? = null
 
     val directory: File
         get() = File(appCtx.externalFiles, DIR_NAME)
@@ -58,6 +65,7 @@ object SearchLogStorage {
      */
     fun loadRecent(limit: Int): List<SearchLogRecord> {
         if (limit <= 0) return emptyList()
+        awaitPendingClear()
         val dir = directory
         if (!dir.isDirectory) return emptyList()
         val files = dir.listFiles()
@@ -90,6 +98,7 @@ object SearchLogStorage {
      * 当前日志目录里总共有多少条记录（只数行，不解析）。
      */
     fun countRecords(): Int {
+        awaitPendingClear()
         val dir = directory
         if (!dir.isDirectory) return 0
         return dir.listFiles()
@@ -98,11 +107,25 @@ object SearchLogStorage {
             ?: 0
     }
 
+    /**
+     * 清空磁盘。和 [append] 提交到同一个单线程队列，保证排在已提交的写入之后执行；
+     * 否则队列里还没跑的写入会在删除后把当天文件重新建出来。
+     */
     fun clear() {
         val dir = directory
-        if (dir.isDirectory) {
-            dir.listFiles()?.forEach { file -> runCatching { file.delete() } }
+        pendingClear = writer.submit {
+            runCatching {
+                if (dir.isDirectory) {
+                    dir.listFiles()?.forEach { file -> runCatching { file.delete() } }
+                }
+            }
+            // 清空后重新做过期文件清理
+            lastCleanDay = ""
         }
+    }
+
+    private fun awaitPendingClear() {
+        pendingClear?.let { runCatching { it.get(5, TimeUnit.SECONDS) } }
     }
 
     private fun cleanOldFiles(dir: File, today: String) {
