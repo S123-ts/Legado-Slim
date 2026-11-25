@@ -52,7 +52,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -339,7 +338,7 @@ class HttpReadAloudService : BaseReadAloudService(),
                     for (downloader in downloaderChannel) {
                         activeDownloader.set(downloader)
                         try {
-                            runInterruptible { downloader.download(null) }
+                            downloadCancellable({ downloader.download(null) }, downloader::cancel)
                         } finally {
                             activeDownloader.compareAndSet(downloader, null)
                         }
@@ -547,8 +546,9 @@ class HttpReadAloudService : BaseReadAloudService(),
                 currentCoroutineContext().ensureActive()
                 ensureSessionActive(sessionId)
                 response.body.byteStream().let { stream ->
+                    val checked = checkedAudioStream(stream)
                     downloadErrorNo = 0
-                    return stream
+                    return checked
                 }
             } catch (e: Exception) {
                 ensureSessionActive(sessionId)
@@ -602,33 +602,27 @@ class HttpReadAloudService : BaseReadAloudService(),
     }
 
     private fun createSilentSound(fileName: String) {
-        val file = createSpeakFile(fileName)
-        file.writeBytes(resources.openRawResource(R.raw.silent_sound).readBytes())
+        resources.openRawResource(R.raw.silent_sound).use { input ->
+            HttpTtsFileCache.write(getSpeakFileAsMd5(fileName), input) { }
+        }
     }
 
     private fun hasSpeakFile(name: String): Boolean {
-        return FileUtils.exist("${ttsFolderPath}$name.mp3")
+        return HttpTtsFileCache.isReusable(getSpeakFileAsMd5(name))
     }
 
     private fun getSpeakFileAsMd5(name: String): File {
         return File("${ttsFolderPath}$name.mp3")
     }
 
-    private fun createSpeakFile(name: String): File {
-        return FileUtils.createFileIfNotExist("${ttsFolderPath}$name.mp3")
-    }
-
     private suspend fun createSpeakFile(name: String, inputStream: InputStream) {
-        val file = FileUtils.createFileIfNotExist("${ttsFolderPath}$name.mp3")
-        try {
-            runInterruptible {
-                file.outputStream().use { out ->
-                    inputStream.use { it.copyTo(out) }
+        val context = currentCoroutineContext()
+        inputStream.use { input ->
+            downloadCancellable(download = {
+                HttpTtsFileCache.write(getSpeakFileAsMd5(name), input) {
+                    context.ensureActive()
                 }
-            }
-        } catch (throwable: Throwable) {
-            file.delete()
-            throw throwable
+            }, cancel = input::close)
         }
     }
 
