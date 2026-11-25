@@ -26,6 +26,18 @@ data class ContentRule(
     var maxBatchSize: Int? = null      //最大批量数量，默认null表示不支持批量
 ) : Parcelable {
 
+    override fun toString(): String = buildString {
+        // Rhino 用这段文本执行 JSON.stringify(rule)，旧书源校验值也依赖它。
+        append("ContentRule(content=$content, subContent=$subContent, title=$title, ")
+        append("nextContentUrl=$nextContentUrl, webJs=$webJs, sourceRegex=$sourceRegex, ")
+        append("replaceRegex=$replaceRegex, imageStyle=$imageStyle, imageDecode=$imageDecode, ")
+        append("payAction=$payAction, callBackJs=$callBackJs")
+        if (contentBatch != null || maxBatchSize != null) {
+            append(", contentBatch=$contentBatch, maxBatchSize=$maxBatchSize")
+        }
+        append(')')
+    }
+
 
     companion object {
 
