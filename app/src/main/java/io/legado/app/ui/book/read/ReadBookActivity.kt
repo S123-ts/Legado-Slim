@@ -115,6 +115,8 @@ import io.legado.app.ui.book.read.page.entities.TextPage
 import io.legado.app.ui.book.read.page.provider.ChapterProvider
 import io.legado.app.ui.book.read.page.provider.LayoutProgressListener
 import io.legado.app.ui.book.searchContent.SearchContentActivity
+import io.legado.app.ui.book.searchContent.ContentSearchAnchor
+import io.legado.app.ui.book.searchContent.ContentSearchAnchorException
 import io.legado.app.ui.book.searchContent.SearchResult
 import io.legado.app.model.SourceCallBack
 import io.legado.app.ui.book.source.edit.BookSourceEditActivity
@@ -160,6 +162,7 @@ import io.legado.app.utils.throttle
 import io.legado.app.utils.toastOnUi
 import io.legado.app.utils.visible
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.Job
@@ -270,6 +273,9 @@ class ReadBookActivity : BaseReadBookActivity(),
     private var backupJob: Job? = null
     private var bookmarkJob: Job? = null
     private var replacePreviewJob: Job? = null
+    private var openSearchJob: Job? = null
+    private var searchJumpJob: Job? = null
+    private var searchJumpGeneration = 0L
     private var replacePreviewGeneration = 0L
     private val bookmarkToggleMutex = Mutex()
     private var bookmarkTogglePending = false
@@ -847,6 +853,9 @@ class ReadBookActivity : BaseReadBookActivity(),
             R.id.menu_edit_content -> ContentEditDialog.newInstance()?.let {
                 showDialogFragment(it)
             }
+            R.id.menu_view_original -> ContentEditDialog.newInstance(viewOriginal = true)?.let {
+                showDialogFragment(it)
+            }
             R.id.menu_reimport_source -> viewModel.prepareSourceReimport()
             R.id.menu_update_toc -> ReadBook.book?.let {
                 if (it.isEpub) {
@@ -1090,6 +1099,14 @@ class ReadBookActivity : BaseReadBookActivity(),
         return super.onKeyUp(keyCode, event)
     }
 
+    // 按下点到光标图标中心的偏移
+    private var cursorTouchOffsetX = 0f
+    private var cursorTouchOffsetY = 0f
+
+    // 光标图标尺寸, 不含扩大触摸范围的内边距
+    private val View.iconWidth get() = width - paddingLeft - paddingRight
+    private val View.iconHeight get() = height - paddingTop - paddingBottom
+
     /**
      * view触摸,文字选择
      */
@@ -1099,30 +1116,39 @@ class ReadBookActivity : BaseReadBookActivity(),
             return false
         }
         when (event.action) {
-            MotionEvent.ACTION_DOWN -> textActionMenu.dismiss()
+            MotionEvent.ACTION_DOWN -> {
+                textActionMenu.dismiss()
+                cursorTouchOffsetX =
+                    SelectCursorGeometry.touchOffset(event.x, v.paddingLeft, v.iconWidth)
+                cursorTouchOffsetY =
+                    SelectCursorGeometry.touchOffset(event.y, v.paddingTop, v.iconHeight)
+            }
+
             MotionEvent.ACTION_MOVE -> {
+                val rawX = event.rawX + cursorTouchOffsetX
+                val rawY = event.rawY + cursorTouchOffsetY
                 when (v.id) {
                     R.id.cursor_left -> if (!readView.curPage.getReverseStartCursor()) {
                         readView.selectStartMoveAtRaw(
-                            event.rawX + cursorLeft.width,
-                            event.rawY - cursorLeft.height
+                            rawX + cursorLeft.iconWidth,
+                            rawY - cursorLeft.iconHeight
                         )
                     } else {
                         readView.selectEndMoveAtRaw(
-                            event.rawX - cursorRight.width,
-                            event.rawY - cursorRight.height
+                            rawX - cursorRight.iconWidth,
+                            rawY - cursorRight.iconHeight
                         )
                     }
 
                     R.id.cursor_right -> if (readView.curPage.getReverseEndCursor()) {
                         readView.selectStartMoveAtRaw(
-                            event.rawX + cursorLeft.width,
-                            event.rawY - cursorLeft.height
+                            rawX + cursorLeft.iconWidth,
+                            rawY - cursorLeft.iconHeight
                         )
                     } else {
                         readView.selectEndMoveAtRaw(
-                            event.rawX - cursorRight.width,
-                            event.rawY - cursorRight.height
+                            rawX - cursorRight.iconWidth,
+                            rawY - cursorRight.iconHeight
                         )
                     }
                 }
@@ -1141,8 +1167,9 @@ class ReadBookActivity : BaseReadBookActivity(),
      * 更新文字选择开始位置
      */
     override fun upSelectedStart(x: Float, y: Float, top: Float) = binding.run {
-        cursorLeft.x = x - cursorLeft.width
-        cursorLeft.y = y
+        cursorLeft.x =
+            SelectCursorGeometry.startCursorX(x, cursorLeft.width, cursorLeft.paddingRight)
+        cursorLeft.y = SelectCursorGeometry.cursorY(y, cursorLeft.paddingTop)
         cursorLeft.visible(true)
         textMenuPosition.x = x
         textMenuPosition.y = top
@@ -1152,8 +1179,8 @@ class ReadBookActivity : BaseReadBookActivity(),
      * 更新文字选择结束位置
      */
     override fun upSelectedEnd(x: Float, y: Float) = binding.run {
-        cursorRight.x = x
-        cursorRight.y = y
+        cursorRight.x = SelectCursorGeometry.endCursorX(x, cursorRight.paddingLeft)
+        cursorRight.y = SelectCursorGeometry.cursorY(y, cursorRight.paddingTop)
         cursorRight.visible(true)
     }
 
@@ -1278,10 +1305,8 @@ class ReadBookActivity : BaseReadBookActivity(),
 
     override fun onHighlightStyleChanged(style: HighlightStyle) {
         editingHighlight?.let { highlight ->
-            val visibleStyle = visibleHighlightStyle(style)
-            highlight.applyStyle(visibleStyle)
-            ReadBook.updateHighlight(highlight)
-            ReadBook.saveLastHighlightStyle(visibleStyle)
+            ReadBook.updateHighlightStyle(highlight, style)
+            ReadBook.saveLastHighlightStyle(style)
         }
     }
 
@@ -1853,13 +1878,32 @@ class ReadBookActivity : BaseReadBookActivity(),
      */
     override fun openSearchActivity(searchWord: String?) {
         val book = ReadBook.book ?: return
-        searchContentActivity.launch {
-            putExtra("bookUrl", book.bookUrl)
-            putExtra("searchWord", searchWord ?: viewModel.searchContentQuery)
-            putExtra("searchResultIndex", viewModel.searchResultIndex)
-            viewModel.searchResultList?.first()?.let {
-                if (it.query == viewModel.searchContentQuery) {
-                    IntentData.put("searchResultList", viewModel.searchResultList)
+        binding.readView.updateScrollReadPosition()
+        val chapterIndex = ReadBook.durChapterIndex
+        val chapterPosition = ReadBook.durChapterPos
+        val chapter = ReadBook.curTextChapter?.takeIf {
+            it.isCompleted && it.chapter.bookUrl == book.bookUrl && it.chapter.index == chapterIndex
+        }
+        val query = searchWord ?: viewModel.searchContentQuery
+        val results = viewModel.searchResultList?.takeIf { it.firstOrNull()?.query == query }
+        val resultIndex = viewModel.searchResultIndex
+        openSearchJob?.cancel()
+        openSearchJob = lifecycleScope.launch {
+            val anchor = withContext(Default) {
+                chapter?.let {
+                    ContentSearchAnchor.capture(
+                        chapterIndex, it.getContent(), it.layoutTitleLength, chapterPosition,
+                    )
+                }
+            }
+            searchContentActivity.launch {
+                putExtra("bookUrl", book.bookUrl)
+                putExtra("searchChapterIndex", chapterIndex)
+                putExtra("searchAnchorKey", IntentData.put(anchor))
+                putExtra("searchWord", query)
+                putExtra("searchResultIndex", resultIndex)
+                results?.let {
+                    IntentData.put("searchResultList", it)
                 }
             }
         }
@@ -1909,6 +1953,8 @@ class ReadBookActivity : BaseReadBookActivity(),
 
     // 退出全文搜索
     override fun exitSearchMenu() {
+        searchJumpGeneration++
+        searchJumpJob?.cancel()
         if (isShowingSearchResult) {
             isShowingSearchResult = false
             binding.searchMenu.invalidate()
@@ -2672,39 +2718,56 @@ class ReadBookActivity : BaseReadBookActivity(),
 
     /* 全文搜索跳转 */
     private fun skipToSearch(searchResult: SearchResult) {
+        val generation = ++searchJumpGeneration
+        searchJumpJob?.cancel()
         if (searchResult.chapterIndex != ReadBook.durChapterIndex) {
             viewModel.openChapter(searchResult.chapterIndex) {
-                jumpToPosition(searchResult)
+                if (generation == searchJumpGeneration) jumpToPosition(searchResult, generation)
             }
         } else {
-            jumpToPosition(searchResult)
+            jumpToPosition(searchResult, generation)
         }
     }
 
-    private fun jumpToPosition(searchResult: SearchResult) {
+    private fun jumpToPosition(searchResult: SearchResult, generation: Long) {
         val curTextChapter = ReadBook.curTextChapter ?: return
-        binding.searchMenu.updateSearchInfo()
-        val searchResultPositions =
-            viewModel.searchResultPositions(curTextChapter, searchResult)
-        val (pageIndex, lineIndex, charIndex, addLine, charIndex2) = searchResultPositions
-        ReadBook.skipToPage(pageIndex) {
-            isSelectingSearchResult = true
-            binding.readView.curPage.selectStartMoveIndex(0, lineIndex, charIndex)
-            when (addLine) {
-                0 -> binding.readView.curPage.selectEndMoveIndex(
-                    0,
-                    lineIndex,
-                    charIndex + searchResultPositions[5] - 1
-                )
-
-                1 -> binding.readView.curPage.selectEndMoveIndex(
-                    0, lineIndex + 1, charIndex2
-                )
-                //consider change page, jump to scroll position
-                -1 -> binding.readView.curPage.selectEndMoveIndex(1, 0, charIndex2)
+        searchJumpJob?.cancel()
+        searchJumpJob = lifecycleScope.launch {
+            binding.searchMenu.updateSearchInfo()
+            val searchResultPositions = try {
+                withContext(Default) {
+                    viewModel.searchResultPositions(curTextChapter, searchResult)
+                }
+            } catch (_: ContentSearchAnchorException) {
+                toastOnUi(R.string.content_search_result_unavailable)
+                return@launch
             }
-            binding.readView.isTextSelected = true
-            isSelectingSearchResult = false
+            if (generation != searchJumpGeneration || ReadBook.curTextChapter !== curTextChapter) return@launch
+            val (pageIndex, lineIndex, charIndex, addLine, charIndex2) = searchResultPositions
+            ReadBook.skipToPage(pageIndex) {
+                if (generation != searchJumpGeneration || ReadBook.curTextChapter !== curTextChapter) return@skipToPage
+                if (searchResultPositions[5] <= 0) {
+                    binding.readView.cancelSelect(true)
+                    return@skipToPage
+                }
+                isSelectingSearchResult = true
+                binding.readView.curPage.selectStartMoveIndex(0, lineIndex, charIndex)
+                when (addLine) {
+                    0 -> binding.readView.curPage.selectEndMoveIndex(
+                        0,
+                        lineIndex,
+                        charIndex + searchResultPositions[5] - 1
+                    )
+
+                    1 -> binding.readView.curPage.selectEndMoveIndex(
+                        0, lineIndex + 1, charIndex2
+                    )
+                    // 翻页后跳到对应滚动位置
+                    -1 -> binding.readView.curPage.selectEndMoveIndex(1, 0, charIndex2)
+                }
+                binding.readView.isTextSelected = true
+                isSelectingSearchResult = false
+            }
         }
     }
 
@@ -3114,5 +3177,28 @@ class ReadBookActivity : BaseReadBookActivity(),
 
 internal fun visibleHighlightStyle(style: HighlightStyle?): HighlightStyle {
     return style?.takeUnless { it.isEmpty } ?: HighlightStyles.presets.first()
+}
+
+/**
+ * 文字选择光标的位置换算
+ * 光标视图在选区外侧和下方留有内边距以扩大触摸范围, 图标尖端仍对齐选区边界
+ */
+internal object SelectCursorGeometry {
+
+    /** 开始光标图标的右上角对齐选区起点 */
+    fun startCursorX(anchorX: Float, viewWidth: Int, paddingRight: Int): Float =
+        anchorX - viewWidth + paddingRight
+
+    /** 结束光标图标的左上角对齐选区终点 */
+    fun endCursorX(anchorX: Float, paddingLeft: Int): Float = anchorX - paddingLeft
+
+    fun cursorY(anchorY: Float, paddingTop: Int): Float = anchorY - paddingTop
+
+    /**
+     * 按下点到图标中心的偏移, 拖动时加上该偏移,
+     * 按在图标外的触摸范围内也等同于按住图标中心, 选区不会跳动
+     */
+    fun touchOffset(touch: Float, leadingPadding: Int, iconSize: Int): Float =
+        leadingPadding + iconSize / 2f - touch
 }
 

@@ -1209,6 +1209,7 @@
     <string name="menu_refresh_all">Refresh all chapters</string>
     <string name="menu_refresh_resources">Refresh all data</string>
     <string name="edit_content">Edit Content</string>
+    <string name="view_original_content">View original</string>
     <string name="chapter_change_source">Single chapter source switching</string>
     <string name="batch_chapter_change_source">Batch chapter source switching</string>
     <string name="chapter_source_skip">Skip chapter</string>
@@ -1838,4 +1839,9 @@
     <string name="booksource_update_lan_tip">Start the book source push service on a LAN computer, then fill in its address here.</string>
     <string name="booksource_update_github_tip">The latest Release of that repo must carry booksource.json and bookSources.json.</string>
     <string name="booksource_synced">Book sources synced</string>
+    <string name="content_search_scope_all">Whole book</string>
+    <string name="content_search_scope_down">From here down</string>
+    <string name="content_search_scope_up">From here up</string>
+    <string name="content_search_anchor_unavailable">The reading position could not be located after text processing. Return to the reader and try again, or choose Whole book.</string>
+    <string name="content_search_result_unavailable">This result could not be located reliably in the displayed text. Check text replacement and title settings, then search again.</string>
 </resources>

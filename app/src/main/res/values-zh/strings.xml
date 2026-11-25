@@ -1204,6 +1204,7 @@
     <string name="menu_refresh_all">刷新全部章节</string>
     <string name="menu_refresh_resources">刷新全部数据</string>
     <string name="edit_content">编辑内容</string>
+    <string name="view_original_content">查看原文</string>
     <string name="chapter_change_source">单章换源</string>
     <string name="batch_chapter_change_source">批量单章换源</string>
     <string name="chapter_source_skip">跳过本章</string>
@@ -1728,4 +1729,9 @@
     <string name="booksource_update_lan_tip">先在局域网电脑启动书源推送服务，再填写其地址。</string>
     <string name="booksource_update_github_tip">该仓库的最新 Release 需包含 booksource.json 与 bookSources.json。</string>
     <string name="booksource_synced">书源已同步</string>
+    <string name="content_search_scope_all">全局</string>
+    <string name="content_search_scope_down">向下</string>
+    <string name="content_search_scope_up">向上</string>
+    <string name="content_search_anchor_unavailable">正文处理后无法可靠定位当前阅读位置。请返回阅读页重试，或切换为全局搜索。</string>
+    <string name="content_search_result_unavailable">无法在阅读正文中可靠定位此结果。请检查替换净化和标题设置后重新搜索。</string>
 </resources>

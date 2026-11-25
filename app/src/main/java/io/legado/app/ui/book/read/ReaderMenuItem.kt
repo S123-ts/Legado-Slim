@@ -18,6 +18,7 @@ enum class ReaderMenuItem(
     Bookmark("bookmark", intArrayOf(R.id.menu_add_bookmark), R.string.bookmark_add),
     HighlightRule("highlightRule", intArrayOf(R.id.menu_highlight_rule), R.string.highlight_rule),
     EditContent("editContent", intArrayOf(R.id.menu_edit_content), R.string.edit_content),
+    ViewOriginal("viewOriginal", intArrayOf(R.id.menu_view_original), R.string.view_original_content),
     PageAnim("pageAnim", intArrayOf(R.id.menu_page_anim), R.string.book_page_anim),
     GetProgress("getProgress", intArrayOf(R.id.menu_get_progress), R.string.get_book_progress),
     CoverProgress("coverProgress", intArrayOf(R.id.menu_cover_progress), R.string.cover_book_progress),

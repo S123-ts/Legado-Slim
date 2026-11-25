@@ -60,6 +60,11 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/menu_view_original"
+        android:title="@string/view_original_content"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/menu_page_anim"
         android:title="@string/book_page_anim"
         app:showAsAction="never" />

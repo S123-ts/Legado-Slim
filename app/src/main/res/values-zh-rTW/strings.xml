@@ -1028,6 +1028,7 @@
     <string name="menu_refresh_after">重新整理之後章節</string>
     <string name="menu_refresh_all">重新整理全部章節</string>
     <string name="edit_content">編輯內容</string>
+    <string name="view_original_content">查看原文</string>
     <string name="chapter_change_source">單章換源</string>
     <string name="book_change_source">整書換源</string>
     <string name="sort_by_time">時間排序</string>
@@ -1325,4 +1326,9 @@
     <string name="book_memo_discard">放棄未儲存的修改並關閉？</string>
     <string name="book_memo_save_failed">備忘儲存失敗：%1$s</string>
     <string name="reimport_book_source">重新匯入本書書源</string>
+    <string name="content_search_scope_all">全局</string>
+    <string name="content_search_scope_down">向下</string>
+    <string name="content_search_scope_up">向上</string>
+    <string name="content_search_anchor_unavailable">正文處理後無法可靠定位目前閱讀位置。請返回閱讀頁重試，或切換為全域搜尋。</string>
+    <string name="content_search_result_unavailable">無法在閱讀正文中可靠定位此結果。請檢查替換淨化和標題設定後重新搜尋。</string>
 </resources>

@@ -81,6 +81,11 @@ class HighlightStyleDialog : BottomSheetDialogFragment(),
         refresh()
     }
 
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        super.onViewStateRestored(savedInstanceState)
+        refresh()
+    }
+
     override fun onDestroyView() {
         rows.clear()
         _binding = null
@@ -301,7 +306,7 @@ class HighlightStyleDialog : BottomSheetDialogFragment(),
     }
 
     fun refresh() {
-        if (_binding == null) return
+        if (_binding == null || rows.size != channels.size) return
         val style = currentStyle()
         channels.forEachIndexed { index, channel ->
             val row = rows[index]

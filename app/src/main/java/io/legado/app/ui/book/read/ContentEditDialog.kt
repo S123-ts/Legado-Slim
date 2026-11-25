@@ -110,7 +110,7 @@ internal class ContentDraftState {
 }
 
 /**
- * 内容编辑
+ * 内容编辑与原文查看
  */
 class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
 
@@ -119,6 +119,7 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
         private const val ARG_CHAPTER_INDEX = "chapterIndex"
         private const val ARG_CHAPTER_POS = "chapterPos"
         private const val ARG_TITLE = "title"
+        private const val ARG_VIEW_ORIGINAL = "viewOriginal"
         private const val STATE_HAS_DRAFT = "hasDraft"
         private const val STATE_DRAFT = "contentRawDraft"
         private const val STATE_SELECTION_START = "contentRawSelectionStart"
@@ -132,7 +133,7 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
         private const val STATE_SEARCH_ANCHOR = "contentSearchAnchor"
         private const val STATE_SCROLL_Y = "contentScrollY"
 
-        fun newInstance(): ContentEditDialog? {
+        fun newInstance(viewOriginal: Boolean = false): ContentEditDialog? {
             val book = ReadBook.book ?: return null
             val chapterIndex = ReadBook.durChapterIndex
             val title = ReadBook.curTextChapter
@@ -147,6 +148,7 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
                     putInt(ARG_CHAPTER_INDEX, chapterIndex)
                     putInt(ARG_CHAPTER_POS, ReadBook.durChapterPos)
                     putString(ARG_TITLE, title)
+                    putBoolean(ARG_VIEW_ORIGINAL, viewOriginal)
                 }
             }
         }
@@ -174,6 +176,8 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
             chapterPos = arguments?.getInt(ARG_CHAPTER_POS) ?: 0,
         )
     }
+    private val viewOriginal: Boolean
+        get() = arguments?.getBoolean(ARG_VIEW_ORIGINAL) == true
 
     override fun onStart() {
         super.onStart()
@@ -183,11 +187,19 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
     override fun onFragmentCreated(view: View, savedInstanceState: Bundle?) {
         val owner = viewLifecycleOwner
         val contentView = binding.contentView
+        if (viewOriginal) {
+            contentView.keyListener = null
+            contentView.setTextIsSelectable(true)
+            contentView.isCursorVisible = false
+        }
         plainText = requireContext().getPrefBoolean(PREF_PLAIN_TEXT, false)
         restoredScrollY = savedInstanceState?.getInt(STATE_SCROLL_Y)
         binding.toolBar.setBackgroundColor(primaryColor)
         binding.toolBar.title = viewModel.titleLiveData.value
             ?: arguments?.getString(ARG_TITLE)
+        if (viewOriginal) {
+            binding.toolBar.subtitle = getString(R.string.view_original_content)
+        }
         viewModel.titleLiveData.observe(owner) {
             binding.toolBar.title = it
         }
@@ -202,7 +214,7 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
             override fun onStopTrackingTouch(bar: SeekBar) = Unit
         })
         binding.toolBar.setOnClickListener {
-            if (editTitleDialog != null) return@setOnClickListener
+            if (viewOriginal || editTitleDialog != null) return@setOnClickListener
             owner.lifecycleScope.launch {
                 val chapter = withContext(IO) {
                     appDb.bookChapterDao.getChapter(
@@ -229,7 +241,9 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
                 }
                 contentView.apply {
                     val textLayout = layout ?: return@post
-                    val position = if (plainText) projection.displayOffset(editTarget.chapterPos) else editTarget.chapterPos
+                    val position = if (viewOriginal) 0 else {
+                        if (plainText) projection.displayOffset(editTarget.chapterPos) else editTarget.chapterPos
+                    }
                     val lineIndex = textLayout.getLineForOffset(position.coerceIn(0, length()))
                     val target = restoredScrollY ?: textLayout.getLineTop(lineIndex)
                     restoredScrollY = null
@@ -243,7 +257,7 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
         super.onViewStateRestored(savedInstanceState)
         val contentView = binding.contentView
         val owner = viewLifecycleOwner
-        if (savedInstanceState?.getBoolean(STATE_HAS_DRAFT) == true) {
+        if (!viewOriginal && savedInstanceState?.getBoolean(STATE_HAS_DRAFT) == true) {
             viewModel.restoreDraft(
                 savedInstanceState.getString(STATE_DRAFT) ?: contentView.text?.toString().orEmpty(),
                 savedInstanceState.getBoolean(STATE_HAS_CHANGES),
@@ -266,7 +280,7 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
         contentView.doAfterTextChanged {
             if (renderingDraft) return@doAfterTextChanged
             val displayed = it?.toString().orEmpty()
-            val raw = if (plainText) projection.replace(changeStart, changeEnd,
+            val raw = if (plainText && !viewOriginal) projection.replace(changeStart, changeEnd,
                 displayed.substring(changeStart, changeStart + changeCount)) else displayed
             editingDraft = true
             try { viewModel.updateDraft(raw) } finally { editingDraft = false }
@@ -276,7 +290,7 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
             }
         }
         setupSearch(savedInstanceState)
-        viewModel.initContent(editTarget)
+        viewModel.initContent(editTarget, viewOriginal = viewOriginal)
         contentView.doOnLayout {
             if (owner.lifecycle.currentState.isAtLeast(Lifecycle.State.CREATED) && viewModel.hasDraft) {
                 restoredScrollY?.let {
@@ -289,10 +303,10 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putBoolean(STATE_HAS_DRAFT, viewModel.hasDraft)
-        outState.putBoolean(STATE_HAS_CHANGES, viewModel.hasChanges)
+        outState.putBoolean(STATE_HAS_DRAFT, !viewOriginal && viewModel.hasDraft)
+        outState.putBoolean(STATE_HAS_CHANGES, !viewOriginal && viewModel.hasChanges)
         // Save the canonical draft once; the EditText contains only its current presentation.
-        outState.putString(STATE_DRAFT, viewModel.draftText)
+        outState.putString(STATE_DRAFT, if (viewOriginal) null else viewModel.draftText)
         if (view == null) return
         val (start, end) = rawSelectionRange()
         outState.putInt(STATE_SELECTION_START, start)
@@ -319,13 +333,16 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
 
     private fun initMenu() {
         binding.toolBar.inflateMenu(R.menu.content_edit)
+        binding.toolBar.menu.findItem(R.id.menu_save).isVisible = !viewOriginal
+        binding.toolBar.menu.findItem(R.id.menu_reset).isVisible = !viewOriginal
+        binding.toolBar.menu.findItem(R.id.menu_content_plain_text).isVisible = !viewOriginal
         binding.toolBar.menu.findItem(R.id.menu_content_plain_text).isChecked = plainText
         binding.toolBar.menu.applyTint(requireContext())
         binding.toolBar.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.menu_search -> toggleSearch()
                 R.id.menu_save -> {
-                    save()
+                    if (!viewOriginal) save()
                     dismiss()
                 }
                 R.id.menu_reset -> viewModel.initContent(editTarget, true)
@@ -356,7 +373,8 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
     }
 
     private fun rawSelection(offset: Int, afterImages: Boolean): Int =
-        if (plainText) projection.rawOffset(offset, afterImages) else offset.coerceAtLeast(0)
+        if (viewOriginal) offset.coerceAtLeast(0)
+        else if (plainText) projection.rawOffset(offset, afterImages) else offset.coerceAtLeast(0)
 
     private fun rawSelectionRange(): Pair<Int, Int> {
         val contentView = binding.contentView
@@ -369,15 +387,15 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
 
     private fun setRawSelection(start: Int, end: Int) {
         val contentView = binding.contentView
-        val from = if (plainText) projection.displayOffset(start) else start
-        val to = if (plainText) projection.displayOffset(end) else end
+        val from = if (viewOriginal) start else if (plainText) projection.displayOffset(start) else start
+        val to = if (viewOriginal) end else if (plainText) projection.displayOffset(end) else end
         contentView.setSelection(from.coerceIn(0, contentView.length()), to.coerceIn(0, contentView.length()))
     }
 
     private fun renderDraft(raw: String): Boolean {
         projection = ContentEditProjection(raw)
         val contentView = binding.contentView
-        val displayed = if (plainText) projection.text else raw
+        val displayed = if (viewOriginal || !plainText) raw else projection.text
         if (contentView.text?.toString() == displayed) return false
         val oldDisplay = ContentEditProjection(contentView.text?.toString().orEmpty())
         val start = contentView.selectionStart.coerceAtLeast(0)
@@ -386,8 +404,10 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
         try {
             contentView.setText(displayed)
             contentView.setSelection(
-                (if (plainText) oldDisplay.displayOffset(start) else start).coerceIn(0, displayed.length),
-                (if (plainText) oldDisplay.displayOffset(end) else end).coerceIn(0, displayed.length),
+                (if (plainText && !viewOriginal) oldDisplay.displayOffset(start) else start)
+                    .coerceIn(0, displayed.length),
+                (if (plainText && !viewOriginal) oldDisplay.displayOffset(end) else end)
+                    .coerceIn(0, displayed.length),
             )
         } finally { renderingDraft = false }
         return true
@@ -554,10 +574,11 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
 
     override fun onCancel(dialog: DialogInterface) {
         super.onCancel(dialog)
-        if (viewModel.hasChanges) save()
+        if (!viewOriginal && viewModel.hasChanges) save()
     }
 
     private fun save() {
+        if (viewOriginal) return
         val content = viewModel.draftText ?: return
         Coroutine.async {
             val book = ReadBook.book?.takeIf { it.bookUrl == editTarget.bookUrl }
@@ -597,6 +618,7 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
             val draft: ContentDraftRequest,
             val reset: Boolean,
             val target: ContentEditTarget,
+            val viewOriginal: Boolean,
         )
 
         fun restoreDraft(text: String, hasChanges: Boolean) {
@@ -607,12 +629,17 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
             if (draftState.update(text)) contentLiveData.value = text
         }
 
-        internal fun initContent(target: ContentEditTarget, reset: Boolean = false) {
+        internal fun initContent(
+            target: ContentEditTarget,
+            reset: Boolean = false,
+            viewOriginal: Boolean = false,
+        ) {
             if (!reset && (draftState.hasDraft || contentTask?.isActive == true)) return
             val request = ContentLoadRequest(
                 draft = draftState.newRequest(),
                 reset = reset,
                 target = target,
+                viewOriginal = viewOriginal,
             )
             if (contentTask?.isActive == true) {
                 pendingReset = request
@@ -641,14 +668,17 @@ class ContentEditDialog : BaseDialogFragment(R.layout.dialog_content_edit) {
                         }
                     }
                 }
-                val contentProcessor = ContentProcessor.get(book.name, book.origin)
                 val content = BookHelp.getContent(book, chapter) ?: return@execute null
-                contentProcessor.getContent(
-                    book,
-                    chapter,
-                    content,
-                    includeTitle = false,
-                ).toString()
+                if (request.viewOriginal) {
+                    content
+                } else {
+                    ContentProcessor.get(book.name, book.origin).getContent(
+                        book,
+                        chapter,
+                        content,
+                        includeTitle = false,
+                    ).toString()
+                }
             }.onStart {
                 loadStateLiveData.postValue(true)
             }.onSuccess {

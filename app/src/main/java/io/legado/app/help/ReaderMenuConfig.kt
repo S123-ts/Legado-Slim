@@ -38,6 +38,7 @@ data class ReaderMenuConfig(
             "bookmark",
             "highlightRule",
             "editContent",
+            "viewOriginal",
             "pageAnim",
             "getProgress",
             "coverProgress",
